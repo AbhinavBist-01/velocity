@@ -1,6 +1,6 @@
 import { z, zodUndefinedModel } from "../../schema";
 import { shipflowService } from "../../services";
-import { publicProcedure, router } from "../../trpc";
+import { publicProcedure, protectedProcedure, router } from "../../trpc";
 
 const TAGS = ["ShipFlow"];
 
@@ -83,7 +83,7 @@ export const shipflowRouter = router({
       return shipflowService.getProjectDetails(input.id);
     }),
 
-  createProject: publicProcedure
+  createProject: protectedProcedure
     .meta({ openapi: { method: "POST", path: "/shipflow/projects", tags: TAGS } })
     .input(
       z.object({
@@ -111,7 +111,7 @@ export const shipflowRouter = router({
       return shipflowService.getFeatureDetails(input.id);
     }),
 
-  createFeature: publicProcedure
+  createFeature: protectedProcedure
     .meta({ openapi: { method: "POST", path: "/shipflow/features", tags: TAGS } })
     .input(
       z.object({
@@ -131,7 +131,7 @@ export const shipflowRouter = router({
       );
     }),
 
-  forceProceedFeature: publicProcedure
+  forceProceedFeature: protectedProcedure
     .meta({ openapi: { method: "POST", path: "/shipflow/features/{featureId}/proceed", tags: TAGS } })
     .input(z.object({ featureId: z.string() }))
     .output(FeatureSchema)
@@ -139,7 +139,7 @@ export const shipflowRouter = router({
       return shipflowService.forceProceedFeature(input.featureId);
     }),
 
-  submitIntakeAnswers: publicProcedure
+  submitIntakeAnswers: protectedProcedure
     .meta({ openapi: { method: "POST", path: "/shipflow/features/intake", tags: TAGS } })
     .input(
       z.object({
@@ -152,7 +152,7 @@ export const shipflowRouter = router({
       return shipflowService.submitIntakeAnswers(input.featureId, input.answers);
     }),
 
-  approvePrd: publicProcedure
+  approvePrd: protectedProcedure
     .meta({ openapi: { method: "POST", path: "/shipflow/features/approve-prd", tags: TAGS } })
     .input(
       z.object({
@@ -165,7 +165,7 @@ export const shipflowRouter = router({
       return shipflowService.approvePrd(input.featureId, input.prdContent);
     }),
 
-  updateTaskStatus: publicProcedure
+  updateTaskStatus: protectedProcedure
     .meta({ openapi: { method: "POST", path: "/shipflow/tasks/status", tags: TAGS } })
     .input(
       z.object({
@@ -178,7 +178,7 @@ export const shipflowRouter = router({
       return shipflowService.updateTaskStatus(input.taskId, input.status);
     }),
 
-  initializeBranch: publicProcedure
+  initializeBranch: protectedProcedure
     .meta({ openapi: { method: "POST", path: "/shipflow/features/initialize-branch", tags: TAGS } })
     .input(z.object({ featureId: z.string() }))
     .output(PullRequestSchema)
@@ -186,7 +186,7 @@ export const shipflowRouter = router({
       return shipflowService.initializeBranch(input.featureId);
     }),
 
-  runAiReview: publicProcedure
+  runAiReview: protectedProcedure
     .meta({ openapi: { method: "POST", path: "/shipflow/features/run-review", tags: TAGS } })
     .input(z.object({ featureId: z.string() }))
     .output(AiReviewSchema)
@@ -194,7 +194,7 @@ export const shipflowRouter = router({
       return shipflowService.runAiReview(input.featureId);
     }),
 
-  submitFixes: publicProcedure
+  submitFixes: protectedProcedure
     .meta({ openapi: { method: "POST", path: "/shipflow/features/submit-fixes", tags: TAGS } })
     .input(z.object({ featureId: z.string() }))
     .output(z.object({
@@ -205,7 +205,7 @@ export const shipflowRouter = router({
       return shipflowService.submitFixes(input.featureId);
     }),
 
-  approveRelease: publicProcedure
+  approveRelease: protectedProcedure
     .meta({ openapi: { method: "POST", path: "/shipflow/features/approve-release", tags: TAGS } })
     .input(z.object({ featureId: z.string() }))
     .output(FeatureSchema)
@@ -213,7 +213,7 @@ export const shipflowRouter = router({
       return shipflowService.approveRelease(input.featureId);
     }),
 
-  shipFeature: publicProcedure
+  shipFeature: protectedProcedure
     .meta({ openapi: { method: "POST", path: "/shipflow/features/ship", tags: TAGS } })
     .input(z.object({ featureId: z.string() }))
     .output(z.object({
