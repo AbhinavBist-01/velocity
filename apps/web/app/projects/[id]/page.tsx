@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { trpc } from "~/trpc/client";
 import { 
   ArrowLeft, Plus, Github, Clock, CheckCircle, HelpCircle, 
-  ChevronRight, Mail, Ticket, PhoneCall, Terminal, ShieldAlert 
+  ChevronRight, Mail, Ticket, PhoneCall, Terminal, ShieldAlert, GitPullRequest, Code, FileText
 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "~/components/ui/card";
@@ -56,6 +56,11 @@ export default function ProjectDetails() {
   const [title, setTitle] = useState("");
   const [desc, setDesc] = useState("");
   const [channel, setChannel] = useState("direct");
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,50 +78,50 @@ export default function ProjectDetails() {
 
   const getChannelIcon = (c: string) => {
     switch (c) {
-      case "email": return <Mail className="h-3.5 w-3.5" />;
-      case "support": return <Ticket className="h-3.5 w-3.5" />;
-      case "call": return <PhoneCall className="h-3.5 w-3.5" />;
-      default: return <Terminal className="h-3.5 w-3.5" />;
+      case "email": return <Mail className="h-3 w-3" />;
+      case "support": return <Ticket className="h-3 w-3" />;
+      case "call": return <PhoneCall className="h-3 w-3" />;
+      default: return <Terminal className="h-3 w-3" />;
     }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "intake":
-        return <Badge variant="secondary" className="bg-yellow-500/10 text-yellow-500 border-yellow-500/20">Intake / Context</Badge>;
+        return <span className="border border-foreground/30 px-2 py-0.5 text-[9px] uppercase tracking-wider font-bold bg-background text-foreground">Discovery Intake</span>;
       case "prd_generation":
-        return <Badge variant="secondary" className="bg-blue-500/10 text-blue-500 border-blue-500/20">PRD Generation</Badge>;
+        return <span className="border border-foreground/30 px-2 py-0.5 text-[9px] uppercase tracking-wider font-bold bg-background text-foreground">PRD Specs</span>;
       case "tasks_breakdown":
-        return <Badge variant="secondary" className="bg-purple-500/10 text-purple-500 border-purple-500/20">Tasks & Planning</Badge>;
+        return <span className="border border-foreground/30 px-2 py-0.5 text-[9px] uppercase tracking-wider font-bold bg-background text-foreground">Planning</span>;
       case "pr_review":
-        return <Badge variant="secondary" className="bg-cyan-500/10 text-cyan-500 border-cyan-500/20">Code & PR Review</Badge>;
+        return <span className="border border-foreground/30 px-2 py-0.5 text-[9px] uppercase tracking-wider font-bold bg-background text-foreground">AI PR Review</span>;
       case "pr_approved":
-        return <Badge variant="secondary" className="bg-indigo-500/10 text-indigo-500 border-indigo-500/20">Lead Approved</Badge>;
+        return <span className="border border-foreground bg-foreground px-2 py-0.5 text-[9px] uppercase tracking-wider font-bold text-background">PR Approved</span>;
       case "shipped":
-        return <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/20">Shipped</Badge>;
+        return <span className="border border-foreground bg-foreground px-2 py-0.5 text-[9px] uppercase tracking-wider font-bold text-background">SHIPPED</span>;
       case "educated":
-        return <Badge variant="secondary" className="bg-neutral-500/10 text-neutral-400 border-neutral-500/20">Educated / Closed</Badge>;
+        return <span className="border border-foreground/20 px-2 py-0.5 text-[9px] uppercase tracking-wider font-bold text-muted-foreground">Bandwidth Saved</span>;
       default:
-        return <Badge variant="outline">{status}</Badge>;
+        return <span className="border border-foreground/20 px-2 py-0.5 text-[9px] uppercase tracking-wider">{status}</span>;
     }
   };
 
   if (isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-        <Spinner className="h-8 w-8 text-primary" />
-        <p className="text-muted-foreground text-sm font-medium animate-pulse">Loading workspace...</p>
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4 bg-background text-foreground font-mono">
+        <Spinner className="h-6 w-6 text-foreground" />
+        <p className="text-muted-foreground text-xs uppercase tracking-widest font-bold animate-pulse">Loading workspace...</p>
       </div>
     );
   }
 
   if (!details) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4 text-center">
-        <ShieldAlert className="h-12 w-12 text-destructive" />
-        <h2 className="text-xl font-bold">Workspace Not Found</h2>
+      <div className="flex flex-col items-center justify-center min-h-screen gap-4 text-center bg-background text-foreground font-mono">
+        <ShieldAlert className="h-10 w-10 text-foreground" />
+        <h2 className="text-lg font-bold uppercase">Workspace Not Found</h2>
         <Link href="/">
-          <Button variant="outline" className="gap-2 rounded-xl mt-2">
+          <Button variant="outline" className="rounded-none border-border font-mono text-xs uppercase tracking-wider mt-2">
             <ArrowLeft className="h-4 w-4" />
             Back to Dashboard
           </Button>
@@ -131,108 +136,108 @@ export default function ProjectDetails() {
   const educatedFeatures = features.filter(f => f.status === "educated");
 
   return (
-    <div className="flex min-h-screen bg-background text-foreground">
+    <div className="flex min-h-screen bg-background text-foreground font-mono bg-grid-dots relative">
       {/* Sidebar */}
       <aside className="w-64 border-r border-border bg-card p-6 flex flex-col justify-between shrink-0 hidden md:flex">
         <div>
           <div className="flex items-center gap-3 mb-8">
-            <div className="p-2 bg-primary text-primary-foreground rounded-lg flex items-center justify-center">
-              <span className="font-bold text-lg">SF</span>
+            <div className="h-9 w-9 bg-foreground text-background flex items-center justify-center font-black text-sm tracking-tighter">
+              SF
             </div>
             <div>
-              <h1 className="font-bold text-sm leading-tight">ShipFlow AI</h1>
-              <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Delivery Engine</span>
+              <h1 className="font-bold text-xs uppercase tracking-wider leading-tight">ShipFlow AI</h1>
+              <span className="text-[9px] text-muted-foreground uppercase tracking-widest block font-medium">Delivery Engine</span>
             </div>
           </div>
 
-          <nav className="space-y-1.5">
-            <Link href="/" className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-muted-foreground hover:text-foreground transition-all">
-              <Clock className="h-4 w-4" />
+          <nav className="space-y-1.5 text-xs uppercase tracking-wider">
+            <Link href="/" className="flex items-center gap-3 px-3 py-2 border border-transparent hover:border-border transition-all">
+              <Clock className="h-4 w-4 text-muted-foreground" />
               <span>Projects</span>
             </Link>
-            <div className="flex items-center gap-3 px-4 py-2.5 rounded-lg bg-secondary text-secondary-foreground font-medium transition-all">
+            <div className="flex items-center gap-3 px-3 py-2 border border-foreground bg-foreground text-background font-bold transition-all">
               <Github className="h-4 w-4" />
               <span className="truncate">{project.name}</span>
             </div>
           </nav>
         </div>
 
-        <div className="p-4 rounded-xl bg-muted/50 border border-border/50 text-xs text-muted-foreground">
-          <p className="font-medium text-foreground mb-1">Pair Programming Active</p>
-          <p className="leading-normal">Move features from idea to prod with AI guidance.</p>
+        <div className="p-4 border border-border bg-background text-[10px] text-muted-foreground leading-relaxed">
+          <p className="font-bold text-foreground mb-1 uppercase tracking-widest">// PAIR_PROG_ACTIVE</p>
+          <p>Move features from idea to prod with typesafe AI guidance hooks.</p>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-8 lg:p-12 overflow-y-auto">
-        <Link href="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-8 font-medium">
-          <ArrowLeft className="h-4 w-4" />
+      <main className="flex-1 p-8 lg:p-12 overflow-y-auto border-l border-border/40">
+        <Link href="/" className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground transition-all mb-8 font-bold border border-border hover:border-foreground px-3 py-1.5 bg-card">
+          <ArrowLeft className="h-3.5 w-3.5" />
           <span>Back to Projects</span>
         </Link>
 
-        {/* Project Profile */}
-        <section className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 border-b border-border/60 pb-8 mb-10">
-          <div>
-            <div className="flex items-center gap-3 mb-3">
-              <h1 className="text-3xl lg:text-4xl font-extrabold tracking-tight">
+        {/* Project Profile Section */}
+        <section className="flex flex-col lg:flex-row lg:items-start justify-between gap-6 border-b border-border/60 pb-8 mb-10">
+          <div className="space-y-3">
+            <div className="flex flex-wrap items-center gap-3">
+              <h1 className="text-3xl lg:text-4xl font-black uppercase tracking-tighter text-foreground">
                 {project.name}
               </h1>
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted border border-border/40 py-1 px-2.5 rounded-full font-medium">
-                <Github className="h-3.5 w-3.5" />
-                <span>{project.githubRepo.replace("https://", "").replace("github.com/", "")}</span>
+              <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground bg-card border border-border py-1 px-2.5">
+                <Github className="h-3.5 w-3.5 shrink-0" />
+                <span className="uppercase">{project.githubRepo.replace("https://", "").replace("github.com/", "")}</span>
               </div>
             </div>
-            <p className="text-muted-foreground max-w-3xl text-base leading-relaxed">
+            <p className="text-muted-foreground text-sm font-sans leading-relaxed max-w-3xl">
               {project.description}
             </p>
           </div>
 
           <Dialog open={isFeatureOpen} onOpenChange={setIsFeatureOpen}>
             <DialogTrigger asChild>
-              <Button className="gap-2 shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all font-semibold px-6 py-5 rounded-xl self-start lg:self-center">
-                <Plus className="h-5 w-5" />
+              <Button className="rounded-none font-mono text-xs uppercase tracking-widest bg-foreground text-background hover:bg-neutral-800 py-6 px-6 border-2 border-foreground gap-2 transition-all shrink-0">
+                <Plus className="h-4 w-4" />
                 <span>Submit Feature Request</span>
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[520px] bg-card border border-border rounded-2xl">
+            <DialogContent className="sm:max-w-[520px] bg-card border-2 border-foreground rounded-none p-6 font-mono text-foreground">
               <form onSubmit={handleSubmit}>
-                <DialogHeader className="mb-4">
-                  <DialogTitle className="text-xl font-bold">New Feature Intake</DialogTitle>
-                  <DialogDescription className="text-muted-foreground text-sm">
-                    Enter the request. The AI agent will check for existing matches, ask follow-up questions, and generate a PRD.
+                <DialogHeader className="mb-6">
+                  <DialogTitle className="text-lg font-bold uppercase tracking-tight">New Feature Intake</DialogTitle>
+                  <DialogDescription className="text-muted-foreground text-xs font-sans mt-1">
+                    Enter the request requirements. Our AI agent will scan existing code offerings, ask follow-up questions, and auto-write the PRD.
                   </DialogDescription>
                 </DialogHeader>
 
-                <div className="space-y-4 py-2">
+                <div className="space-y-4">
                   <div className="space-y-2">
-                    <label htmlFor="title" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Feature Title</label>
+                    <label htmlFor="title" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">Feature Title</label>
                     <Input
                       id="title"
                       placeholder="e.g. Email notifications on task assignments"
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      className="rounded-xl border-input/60 focus:border-primary transition-all py-5"
+                      className="rounded-none border-border bg-background focus:ring-0 focus:border-foreground text-sm py-5"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label htmlFor="desc" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Feature Request Details</label>
+                    <label htmlFor="desc" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">Feature Request Details</label>
                     <Textarea
                       id="desc"
-                      placeholder="e.g. We want assigned users to get emails. Include email contents like task name and assignee. Provide a toggle to turn it off."
+                      placeholder="Describe what needs to be built..."
                       value={desc}
                       onChange={(e) => setDesc(e.target.value)}
-                      className="rounded-xl border-input/60 focus:border-primary transition-all min-h-[110px]"
+                      className="rounded-none border-border bg-background focus:ring-0 focus:border-foreground text-sm min-h-[110px]"
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <label htmlFor="channel" className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Intake Source / Channel</label>
+                    <label htmlFor="channel" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">Intake Source / Channel</label>
                     <Select value={channel} onValueChange={setChannel}>
-                      <SelectTrigger className="rounded-xl border-input/60 focus:border-primary py-5">
+                      <SelectTrigger className="rounded-none border-border bg-background focus:ring-0 focus:border-foreground py-5 text-xs">
                         <SelectValue placeholder="Select channel source" />
                       </SelectTrigger>
-                      <SelectContent className="bg-card border-border rounded-xl">
+                      <SelectContent className="bg-card border border-border rounded-none font-mono">
                         <SelectItem value="direct">Direct Input (Internal Request)</SelectItem>
                         <SelectItem value="email">Email Intake</SelectItem>
                         <SelectItem value="support">Customer Support Ticket</SelectItem>
@@ -242,19 +247,19 @@ export default function ProjectDetails() {
                   </div>
                 </div>
 
-                <DialogFooter className="mt-6 gap-2 sm:gap-0">
+                <DialogFooter className="mt-8 gap-3 sm:gap-0">
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setIsFeatureOpen(false)}
-                    className="rounded-xl font-medium border-border/80"
+                    className="rounded-none font-mono text-xs uppercase tracking-widest border border-border"
                   >
                     Cancel
                   </Button>
                   <Button
                     type="submit"
                     disabled={createFeatureMutation.isPending}
-                    className="rounded-xl font-medium"
+                    className="rounded-none font-mono text-xs uppercase tracking-widest bg-foreground text-background hover:bg-neutral-800"
                   >
                     {createFeatureMutation.isPending ? "Analyzing..." : "Submit Request"}
                   </Button>
@@ -265,55 +270,53 @@ export default function ProjectDetails() {
         </section>
 
         {/* Feature Tabs */}
-        <Tabs defaultValue="active" className="space-y-6">
-          <TabsList className="bg-muted p-1 rounded-xl w-full sm:w-auto border border-border/30 flex sm:inline-flex">
-            <TabsTrigger value="active" className="rounded-lg py-2 px-5 font-semibold text-sm flex-1 sm:flex-none">
+        <Tabs defaultValue="active" className="space-y-8">
+          <TabsList className="bg-card p-1 rounded-none border border-border flex sm:inline-flex mb-2">
+            <TabsTrigger value="active" className="rounded-none py-2 px-5 font-mono text-xs uppercase tracking-wider data-[state=active]:bg-foreground data-[state=active]:text-background transition-all">
               In Progress ({activeFeatures.length})
             </TabsTrigger>
-            <TabsTrigger value="shipped" className="rounded-lg py-2 px-5 font-semibold text-sm flex-1 sm:flex-none">
+            <TabsTrigger value="shipped" className="rounded-none py-2 px-5 font-mono text-xs uppercase tracking-wider data-[state=active]:bg-foreground data-[state=active]:text-background transition-all">
               Shipped ({shippedFeatures.length})
             </TabsTrigger>
-            <TabsTrigger value="educated" className="rounded-lg py-2 px-5 font-semibold text-sm flex-1 sm:flex-none">
-              Educated ({educatedFeatures.length})
+            <TabsTrigger value="educated" className="rounded-none py-2 px-5 font-mono text-xs uppercase tracking-wider data-[state=active]:bg-foreground data-[state=active]:text-background transition-all">
+              Bandwidth Saved ({educatedFeatures.length})
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="active" className="focus:outline-none">
             {activeFeatures.length === 0 ? (
-              <div className="border border-dashed border-border/80 rounded-2xl p-12 text-center text-muted-foreground">
-                <Clock className="h-8 w-8 mx-auto text-muted-foreground/60 mb-3" />
-                <p className="font-semibold text-foreground text-base mb-1">No Active Feature Flows</p>
-                <p className="text-sm">Click "Submit Feature Request" to start discovery on a new requirement.</p>
+              <div className="border border-dashed border-border bg-card p-12 text-center text-muted-foreground rounded-none">
+                <Clock className="h-8 w-8 mx-auto text-muted-foreground mb-3" />
+                <p className="font-bold text-foreground text-sm uppercase mb-1">No Active Feature Flows</p>
+                <p className="text-xs font-sans">Click "Submit Feature Request" to start discovery on a new requirement.</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {activeFeatures.map((f) => (
-                  <Card key={f.id} className="group hover:border-primary/40 border-border/80 transition-all rounded-xl overflow-hidden shadow-sm">
-                    <CardContent className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                      <div className="space-y-2">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-semibold text-lg text-foreground group-hover:text-primary transition-colors">
-                            {f.title}
-                          </span>
-                          {getStatusBadge(f.status)}
-                          <Badge variant="outline" className="gap-1 bg-muted/40 border-border text-[10px] uppercase font-bold py-0.5 px-2 text-muted-foreground">
-                            {getChannelIcon(f.intakeChannel)}
-                            <span>{f.intakeChannel}</span>
-                          </Badge>
-                        </div>
-                        <p className="text-muted-foreground text-sm line-clamp-2 leading-relaxed">
-                          {f.description}
-                        </p>
+                  <div key={f.id} className="group border border-border hover:border-foreground bg-card transition-all duration-300 p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="space-y-3 flex-1">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <span className="font-black text-base uppercase text-foreground group-hover:text-primary transition-all">
+                          {f.title}
+                        </span>
+                        {getStatusBadge(f.status)}
+                        <Badge variant="outline" className="gap-1 bg-background border-border text-[9px] uppercase font-bold py-0.5 px-2 text-muted-foreground rounded-none">
+                          {getChannelIcon(f.intakeChannel)}
+                          <span>{f.intakeChannel}</span>
+                        </Badge>
                       </div>
+                      <p className="text-muted-foreground text-xs font-sans leading-relaxed line-clamp-2">
+                        {f.description}
+                      </p>
+                    </div>
 
-                      <Link href={`/features/${f.id}`} className="self-end sm:self-center">
-                        <Button className="gap-1.5 rounded-xl font-medium shadow-sm hover:shadow transition-all">
-                          <span>View Pipeline</span>
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                    </CardContent>
-                  </Card>
+                    <Link href={`/features/${f.id}`} className="self-end sm:self-center shrink-0">
+                      <Button className="rounded-none font-mono text-[10px] uppercase tracking-wider bg-background text-foreground border border-border hover:bg-foreground hover:text-background hover:border-foreground py-4 px-4 transition-all gap-1.5 group/btn">
+                        <span>View Pipeline</span>
+                        <ChevronRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-0.5" />
+                      </Button>
+                    </Link>
+                  </div>
                 ))}
               </div>
             )}
@@ -321,39 +324,37 @@ export default function ProjectDetails() {
 
           <TabsContent value="shipped" className="focus:outline-none">
             {shippedFeatures.length === 0 ? (
-              <div className="border border-dashed border-border/80 rounded-2xl p-12 text-center text-muted-foreground">
-                <CheckCircle className="h-8 w-8 mx-auto text-muted-foreground/60 mb-3" />
-                <p className="font-semibold text-foreground text-base mb-1">Nothing Shipped Yet</p>
-                <p className="text-sm">Take feature requests through engineering reviews and lead approvals to ship them.</p>
+              <div className="border border-dashed border-border bg-card p-12 text-center text-muted-foreground rounded-none">
+                <CheckCircle className="h-8 w-8 mx-auto text-muted-foreground mb-3" />
+                <p className="font-bold text-foreground text-sm uppercase mb-1">Nothing Shipped Yet</p>
+                <p className="text-xs font-sans">Take feature requests through engineering reviews and approvals to deploy them.</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {shippedFeatures.map((f) => (
-                  <Card key={f.id} className="border-border/80 rounded-xl overflow-hidden shadow-sm">
-                    <CardContent className="p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-emerald-500/[0.01]">
-                      <div className="space-y-2">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="font-semibold text-lg text-foreground">
-                            {f.title}
-                          </span>
-                          {getStatusBadge(f.status)}
-                          <span className="text-xs text-muted-foreground font-medium">
-                            Shipped: {new Date(f.updatedAt).toLocaleDateString()}
-                          </span>
-                        </div>
-                        <p className="text-muted-foreground text-sm line-clamp-2">
-                          {f.description}
-                        </p>
+                  <div key={f.id} className="border border-border bg-card p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div className="space-y-3 flex-1">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <span className="font-black text-base uppercase text-foreground">
+                          {f.title}
+                        </span>
+                        {getStatusBadge(f.status)}
+                        <span className="text-[10px] text-muted-foreground font-bold">
+                          SHIPPED: {isMounted ? new Date(f.updatedAt).toLocaleDateString() : ""}
+                        </span>
                       </div>
+                      <p className="text-muted-foreground text-xs font-sans leading-relaxed line-clamp-2">
+                        {f.description}
+                      </p>
+                    </div>
 
-                      <Link href={`/features/${f.id}`} className="self-end sm:self-center">
-                        <Button variant="secondary" className="gap-1.5 rounded-xl font-medium border border-border/60 hover:bg-muted/80">
-                          <span>View Release</span>
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      </Link>
-                    </CardContent>
-                  </Card>
+                    <Link href={`/features/${f.id}`} className="self-end sm:self-center shrink-0">
+                      <Button variant="secondary" className="rounded-none font-mono text-[10px] uppercase tracking-wider bg-background text-foreground border border-border hover:bg-foreground hover:text-background hover:border-foreground py-4 px-4 transition-all gap-1.5 group/btn">
+                        <span>View Release</span>
+                        <ChevronRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-0.5" />
+                      </Button>
+                    </Link>
+                  </div>
                 ))}
               </div>
             )}
@@ -361,55 +362,53 @@ export default function ProjectDetails() {
 
           <TabsContent value="educated" className="focus:outline-none">
             {educatedFeatures.length === 0 ? (
-              <div className="border border-dashed border-border/80 rounded-2xl p-12 text-center text-muted-foreground">
-                <HelpCircle className="h-8 w-8 mx-auto text-muted-foreground/60 mb-3" />
-                <p className="font-semibold text-foreground text-base mb-1">No Educated Requests</p>
-                <p className="text-sm">Requests matching existing features will appear here to save engineering bandwidth.</p>
+              <div className="border border-dashed border-border bg-card p-12 text-center text-muted-foreground rounded-none">
+                <HelpCircle className="h-8 w-8 mx-auto text-muted-foreground mb-3" />
+                <p className="font-bold text-foreground text-sm uppercase mb-1">No Bandwidth Saved Cases</p>
+                <p className="text-xs font-sans">Requests matching existing features will appear here to save engineering bandwidth.</p>
               </div>
             ) : (
               <div className="space-y-4">
                 {educatedFeatures.map((f) => (
-                  <Card key={f.id} className="border-border/80 rounded-xl overflow-hidden shadow-sm">
-                    <CardContent className="p-6 space-y-4">
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div className="space-y-1">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <span className="font-semibold text-lg text-foreground">
-                              {f.title}
-                            </span>
-                            {getStatusBadge(f.status)}
-                          </div>
-                          <p className="text-muted-foreground text-xs font-semibold">
-                            Source Request: "{f.description}"
-                          </p>
+                  <div key={f.id} className="border border-border bg-card p-6 space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap items-center gap-3">
+                          <span className="font-black text-base uppercase text-foreground">
+                            {f.title}
+                          </span>
+                          {getStatusBadge(f.status)}
                         </div>
+                        <p className="text-muted-foreground text-[10px] font-bold">
+                          SOURCE REQUEST: "{f.description}"
+                        </p>
+                      </div>
 
-                        <div className="flex items-center gap-2 self-end sm:self-center">
-                          <Button
-                            variant="secondary"
-                            onClick={() => forceProceedMutation.mutate({ featureId: f.id })}
-                            disabled={forceProceedMutation.isPending}
-                            className="rounded-xl text-xs font-medium border border-border/60"
-                          >
-                            {forceProceedMutation.isPending ? "Proceeding..." : "Override & Build Custom"}
+                      <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                        <Button
+                          variant="secondary"
+                          onClick={() => forceProceedMutation.mutate({ featureId: f.id })}
+                          disabled={forceProceedMutation.isPending}
+                          className="rounded-none font-mono text-[10px] uppercase tracking-wider bg-background text-foreground border border-border hover:bg-foreground hover:text-background hover:border-foreground py-3.5 px-3 transition-all"
+                        >
+                          {forceProceedMutation.isPending ? "Proceeding..." : "Override & Build Custom"}
+                        </Button>
+                        <Link href={`/features/${f.id}`}>
+                          <Button className="rounded-none font-mono text-[10px] uppercase tracking-wider bg-foreground text-background border border-foreground hover:bg-neutral-800 py-3.5 px-4 transition-all">
+                            View Explanation
                           </Button>
-                          <Link href={`/features/${f.id}`}>
-                            <Button className="rounded-xl text-xs font-medium">
-                              View Explanation
-                            </Button>
-                          </Link>
-                        </div>
+                        </Link>
                       </div>
+                    </div>
 
-                      <div className="p-4 rounded-xl bg-muted/60 border border-border/40 text-sm leading-relaxed text-muted-foreground flex gap-3">
-                        <ShieldAlert className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-                        <div>
-                          <p className="font-bold text-foreground mb-1 text-xs uppercase tracking-wider">AI Recommendation (Bandwidth Saved)</p>
-                          <p>{f.educationContent}</p>
-                        </div>
+                    <div className="p-4 border border-border bg-background text-xs leading-relaxed text-muted-foreground flex gap-3">
+                      <ShieldAlert className="h-5 w-5 text-foreground shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-bold text-foreground mb-1 text-[10px] uppercase tracking-widest">// AI RECOMMENDATION (BANDWIDTH SAVED)</p>
+                        <p className="font-sans text-xs">{f.educationContent}</p>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
