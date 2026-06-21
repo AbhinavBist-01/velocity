@@ -20,7 +20,15 @@ const openApiDocument = generateOpenApiDocument(serverRouter, {
 if (env.NODE_ENV !== "prod") {
   app.use(
     cors({
-      origin: "*",
+      origin: (origin, callback) => {
+        // Allow requests with no origin (like mobile apps, curl) or localhost origins
+        if (!origin || origin.startsWith("http://localhost:")) {
+          callback(null, true);
+        } else {
+          callback(new Error("Not allowed by CORS"));
+        }
+      },
+      credentials: true,
     }),
   );
 }
