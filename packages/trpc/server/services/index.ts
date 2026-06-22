@@ -1,5 +1,5 @@
 import UserService from "@repo/services/user";
-import { shipFlowService } from "@repo/services/shipflow";
+import { velocityService } from "@repo/services/velocity";
 
 export const userService = new UserService();
-export const shipflowService = shipFlowService;
+export { velocityService };

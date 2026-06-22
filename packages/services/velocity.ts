@@ -12,7 +12,7 @@ import {
   SelectAiReview
 } from "@repo/database/schema";
 
-export class ShipFlowService {
+export class VelocityService {
   // 1. Projects
   public async createProject(name: string, description: string, githubRepo: string): Promise<SelectProject> {
     const [project] = await db
@@ -272,7 +272,7 @@ export const ${feature.title.replace(/[^a-zA-Z0-9]+/g, "")}Table = pgTable("${fe
 });`,
         diff: `@@ -1,3 +1,8 @@
  export * from "./models/user";
- export * from "./models/shipflow";
+ export * from "./models/velocity";
 +
 +export const ${feature.title.replace(/[^a-zA-Z0-9]+/g, "")}Table = pgTable("${feature.title.toLowerCase().replace(/[^a-z0-9]+/g, "_")}", {
 +  id: uuid("id").primaryKey().defaultRandom(),
@@ -285,7 +285,7 @@ export const ${feature.title.replace(/[^a-zA-Z0-9]+/g, "")}Table = pgTable("${fe
         status: "added",
         content: `import { router, publicProcedure } from "../trpc";
 import { z } from "zod";
-
+ 
 // Endpoint to fetch feature configurations
 export const featureRouter = router({
   getConfig: publicProcedure
@@ -401,7 +401,7 @@ export const FeatureTable = pgTable("features_data", {
 });`,
         diff: `@@ -1,3 +1,8 @@
  export * from "./models/user";
- export * from "./models/shipflow";
+ export * from "./models/velocity";
 +
 +export const FeatureTable = pgTable("features_data", {
 +  id: uuid("id").primaryKey().defaultRandom(),
@@ -415,7 +415,7 @@ export const FeatureTable = pgTable("features_data", {
         content: `import { router, protectedProcedure } from "../trpc";
 import { z } from "zod";
 import { rateLimiter } from "../middleware/rate-limiter";
-
+ 
 // Endpoint to fetch feature configurations
 export const featureRouter = router({
   getConfig: protectedProcedure // Added authorization check (FR-4)
@@ -533,4 +533,4 @@ We are excited to announce the release of **${feature.title}**!
   }
 }
 
-export const shipFlowService = new ShipFlowService();
+export const velocityService = new VelocityService();

@@ -37,9 +37,9 @@ async function seed() {
     const [project2] = await db
       .insert(projectsTable)
       .values({
-        name: "ShipFlow AI Core",
+        name: "Velocity AI Core",
         description: "Full-stack SaaS delivery platform that orchestrates product discoverability, automated code compliance checkups, and PM approvals.",
-        githubRepo: "github.com/shipflow-org/core",
+        githubRepo: "github.com/velocity-org/core",
       })
       .returning();
 

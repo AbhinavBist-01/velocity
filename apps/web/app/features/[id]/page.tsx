@@ -24,11 +24,11 @@ export default function FeaturePipeline() {
   const featureId = params.id as string;
   const utils = trpc.useUtils();
 
-  const { data, isLoading } = trpc.shipflow.getFeatureDetails.useQuery({ id: featureId });
+  const { data, isLoading } = trpc.velocity.getFeatureDetails.useQuery({ id: featureId });
   
-  const submitAnswersMutation = trpc.shipflow.submitIntakeAnswers.useMutation({
+  const submitAnswersMutation = trpc.velocity.submitIntakeAnswers.useMutation({
     onSuccess: () => {
-      utils.shipflow.getFeatureDetails.invalidate({ id: featureId });
+      utils.velocity.getFeatureDetails.invalidate({ id: featureId });
       toast.success("Requirements saved! PRD generated.");
     },
     onError: (err) => {
@@ -36,9 +36,9 @@ export default function FeaturePipeline() {
     }
   });
 
-  const forceProceedMutation = trpc.shipflow.forceProceedFeature.useMutation({
+  const forceProceedMutation = trpc.velocity.forceProceedFeature.useMutation({
     onSuccess: () => {
-      utils.shipflow.getFeatureDetails.invalidate({ id: featureId });
+      utils.velocity.getFeatureDetails.invalidate({ id: featureId });
       toast.success("Proceeding with intake questions.");
     },
     onError: (err) => {
@@ -46,9 +46,9 @@ export default function FeaturePipeline() {
     }
   });
 
-  const approvePrdMutation = trpc.shipflow.approvePrd.useMutation({
+  const approvePrdMutation = trpc.velocity.approvePrd.useMutation({
     onSuccess: () => {
-      utils.shipflow.getFeatureDetails.invalidate({ id: featureId });
+      utils.velocity.getFeatureDetails.invalidate({ id: featureId });
       toast.success("PRD Approved! Actionable engineering tasks created.");
     },
     onError: (err) => {
@@ -56,18 +56,18 @@ export default function FeaturePipeline() {
     }
   });
 
-  const updateTaskMutation = trpc.shipflow.updateTaskStatus.useMutation({
+  const updateTaskMutation = trpc.velocity.updateTaskStatus.useMutation({
     onSuccess: () => {
-      utils.shipflow.getFeatureDetails.invalidate({ id: featureId });
+      utils.velocity.getFeatureDetails.invalidate({ id: featureId });
     },
     onError: (err) => {
       toast.error(`Error updating task: ${err.message}`);
     }
   });
 
-  const initializeBranchMutation = trpc.shipflow.initializeBranch.useMutation({
+  const initializeBranchMutation = trpc.velocity.initializeBranch.useMutation({
     onSuccess: () => {
-      utils.shipflow.getFeatureDetails.invalidate({ id: featureId });
+      utils.velocity.getFeatureDetails.invalidate({ id: featureId });
       toast.success("GitHub branch created! Pull Request initialized.");
     },
     onError: (err) => {
@@ -75,9 +75,9 @@ export default function FeaturePipeline() {
     }
   });
 
-  const runAiReviewMutation = trpc.shipflow.runAiReview.useMutation({
+  const runAiReviewMutation = trpc.velocity.runAiReview.useMutation({
     onSuccess: () => {
-      utils.shipflow.getFeatureDetails.invalidate({ id: featureId });
+      utils.velocity.getFeatureDetails.invalidate({ id: featureId });
       toast.success("AI Code Review completed.");
     },
     onError: (err) => {
@@ -85,9 +85,9 @@ export default function FeaturePipeline() {
     }
   });
 
-  const submitFixesMutation = trpc.shipflow.submitFixes.useMutation({
+  const submitFixesMutation = trpc.velocity.submitFixes.useMutation({
     onSuccess: () => {
-      utils.shipflow.getFeatureDetails.invalidate({ id: featureId });
+      utils.velocity.getFeatureDetails.invalidate({ id: featureId });
       toast.success("Developer code fixes submitted! Re-reviewing...");
     },
     onError: (err) => {
@@ -95,9 +95,9 @@ export default function FeaturePipeline() {
     }
   });
 
-  const approveReleaseMutation = trpc.shipflow.approveRelease.useMutation({
+  const approveReleaseMutation = trpc.velocity.approveRelease.useMutation({
     onSuccess: () => {
-      utils.shipflow.getFeatureDetails.invalidate({ id: featureId });
+      utils.velocity.getFeatureDetails.invalidate({ id: featureId });
       toast.success("Lead reviewer approved release.");
     },
     onError: (err) => {
@@ -105,9 +105,9 @@ export default function FeaturePipeline() {
     }
   });
 
-  const shipFeatureMutation = trpc.shipflow.shipFeature.useMutation({
+  const shipFeatureMutation = trpc.velocity.shipFeature.useMutation({
     onSuccess: (res) => {
-      utils.shipflow.getFeatureDetails.invalidate({ id: featureId });
+      utils.velocity.getFeatureDetails.invalidate({ id: featureId });
       setReleaseNotes(res.releaseNotes);
       setShowConfetti(true);
       toast.success("🎉 FEATURE SHIPPED TO PRODUCTION!");
@@ -291,7 +291,7 @@ export default function FeaturePipeline() {
           <div className="p-4 border border-border bg-background text-[10px] text-muted-foreground leading-relaxed">
             <div className="flex items-center gap-2 mb-1.5 text-foreground font-bold uppercase tracking-widest">
               <Terminal className="h-3.5 w-3.5 text-foreground" />
-              <span>ShipFlow Engine</span>
+              <span>Velocity Engine</span>
             </div>
             <p>Monitors code paths, cross-references acceptance criteria, and blocks deployment if specs aren't fulfilled.</p>
           </div>

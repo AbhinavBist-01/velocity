@@ -14,10 +14,10 @@ import { Spinner } from "~/components/ui/spinner";
 
 export default function Dashboard() {
   const utils = trpc.useUtils();
-  const { data: projects, isLoading } = trpc.shipflow.getProjects.useQuery();
-  const createProjectMutation = trpc.shipflow.createProject.useMutation({
+  const { data: projects, isLoading } = trpc.velocity.getProjects.useQuery();
+  const createProjectMutation = trpc.velocity.createProject.useMutation({
     onSuccess: () => {
-      utils.shipflow.getProjects.invalidate();
+      utils.velocity.getProjects.invalidate();
       setIsCreateOpen(false);
       setName("");
       setDescription("");
@@ -54,10 +54,10 @@ export default function Dashboard() {
         <div>
           <div className="flex items-center gap-3 mb-8">
             <div className="h-9 w-9 bg-foreground text-background flex items-center justify-center font-black text-sm tracking-tighter">
-              SF
+              VL
             </div>
             <div>
-              <h1 className="font-bold text-xs uppercase tracking-wider leading-tight">ShipFlow AI</h1>
+              <h1 className="font-bold text-xs uppercase tracking-wider leading-tight">Velocity</h1>
               <span className="text-[9px] text-muted-foreground uppercase tracking-widest block font-medium">Delivery Engine</span>
             </div>
           </div>
@@ -186,7 +186,7 @@ export default function Dashboard() {
             <div>
               <h2 className="text-lg font-bold uppercase mb-2">No Projects Configured</h2>
               <p className="text-muted-foreground text-xs leading-relaxed max-w-md mx-auto font-sans">
-                Kick off the ShipFlow lifecycle. Add your first project, define requirements, generate branches, run reviews, and ship features.
+                Kick off the Velocity lifecycle. Add your first project, define requirements, generate branches, run reviews, and ship features.
               </p>
             </div>
             <Button

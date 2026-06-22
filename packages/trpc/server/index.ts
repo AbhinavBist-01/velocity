@@ -2,12 +2,12 @@ import { router } from "./trpc";
 
 import { healthRouter } from "./routes/health/route";
 import { authRouter } from "./routes/auth/route";
-import { shipflowRouter } from "./routes/shipflow/route";
+import { velocityRouter } from "./routes/velocity/route";
 
 export const serverRouter = router({
   health: healthRouter,
   auth: authRouter,
-  shipflow: shipflowRouter,
+  velocity: velocityRouter,
 });
 
 export { createContext } from "./context";

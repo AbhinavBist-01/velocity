@@ -32,11 +32,11 @@ export default function LandingPage() {
         <div className="max-w-7xl w-full mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="h-9 w-9 bg-foreground text-background flex items-center justify-center font-black text-sm tracking-tighter">
-              SF
+              VL
             </div>
             <div>
               <div className="flex items-center gap-1.5">
-                <span className="font-mono text-xs uppercase tracking-widest font-black">ShipFlow AI</span>
+                <span className="font-mono text-xs uppercase tracking-widest font-black">Velocity</span>
                 <span className="text-[9px] font-mono border border-foreground/30 px-1 py-0.2 leading-none uppercase text-muted-foreground">v1.0</span>
               </div>
               <span className="text-[9px] text-muted-foreground uppercase font-mono tracking-wider block">Automated Delivery Engine</span>
@@ -79,7 +79,7 @@ export default function LandingPage() {
         </h1>
 
         <p className="text-muted-foreground text-base lg:text-lg max-w-3xl mb-12 leading-relaxed font-mono tracking-tight">
-          ShipFlow AI orchestrates the entire software delivery lifecycle. Gather missing requirements, generate structured PRDs, plan engineering tickets, run automated AI PR code reviews, and ship features.
+          Velocity orchestrates the entire software delivery lifecycle. Gather missing requirements, generate structured PRDs, plan engineering tickets, run automated AI PR code reviews, and ship features.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto z-10">
@@ -121,7 +121,7 @@ export default function LandingPage() {
                 <span className="h-3 w-3 rounded-none bg-foreground/20 border border-foreground/30" />
               </div>
               <div className="px-6 py-1 border border-border/60 bg-background text-[10px] font-mono w-72 text-center truncate">
-                shipflow-app/features/stripe-checkout
+                velocity-app/features/stripe-checkout
               </div>
               <div className="flex items-center gap-2 font-mono text-[10px]">
                 <span className="inline-block h-2 w-2 rounded-full bg-foreground animate-ping" />
@@ -299,7 +299,7 @@ export default function LandingPage() {
           <div className="text-left mb-16 max-w-xl">
             <span className="text-xs font-mono font-bold text-muted-foreground uppercase tracking-widest">02 // Life Cycle Steps</span>
             <h2 className="text-3xl lg:text-5xl font-black mt-3 tracking-tighter uppercase">Structured engineering flow</h2>
-            <p className="text-muted-foreground font-mono text-xs mt-3">ShipFlow AI enforces atomic transitions at every step of feature implementation.</p>
+            <p className="text-muted-foreground font-mono text-xs mt-3">Velocity enforces atomic transitions at every step of feature implementation.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-5 gap-8 relative font-mono">
@@ -464,7 +464,7 @@ export default function LandingPage() {
       {/* Footer copyright */}
       <footer className="border-t border-border py-8 px-6 bg-background text-xs text-muted-foreground font-mono w-full">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span>&copy; 2026 ShipFlow AI. All rights reserved.</span>
+          <span>&copy; 2026 Velocity. All rights reserved.</span>
           <div className="flex items-center gap-6">
             <span>Powered by Turborepo & tRPC</span>
             <a href="http://localhost:8000/docs" target="_blank" rel="noopener noreferrer" className="hover:text-foreground hover:underline transition-all flex items-center gap-1">

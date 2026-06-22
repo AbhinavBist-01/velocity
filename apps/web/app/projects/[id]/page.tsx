@@ -25,10 +25,10 @@ export default function ProjectDetails() {
   const projectId = params.id as string;
   const utils = trpc.useUtils();
 
-  const { data: details, isLoading } = trpc.shipflow.getProjectDetails.useQuery({ id: projectId });
-  const createFeatureMutation = trpc.shipflow.createFeature.useMutation({
+  const { data: details, isLoading } = trpc.velocity.getProjectDetails.useQuery({ id: projectId });
+  const createFeatureMutation = trpc.velocity.createFeature.useMutation({
     onSuccess: (feature) => {
-      utils.shipflow.getProjectDetails.invalidate({ id: projectId });
+      utils.velocity.getProjectDetails.invalidate({ id: projectId });
       setIsFeatureOpen(false);
       setTitle("");
       setDesc("");
@@ -41,9 +41,9 @@ export default function ProjectDetails() {
     }
   });
 
-  const forceProceedMutation = trpc.shipflow.forceProceedFeature.useMutation({
+  const forceProceedMutation = trpc.velocity.forceProceedFeature.useMutation({
     onSuccess: (feature) => {
-      utils.shipflow.getProjectDetails.invalidate({ id: projectId });
+      utils.velocity.getProjectDetails.invalidate({ id: projectId });
       toast.success("Proceeding with custom feature setup.");
       router.push(`/features/${feature.id}`);
     },
@@ -142,10 +142,10 @@ export default function ProjectDetails() {
         <div>
           <div className="flex items-center gap-3 mb-8">
             <div className="h-9 w-9 bg-foreground text-background flex items-center justify-center font-black text-sm tracking-tighter">
-              SF
+              VL
             </div>
             <div>
-              <h1 className="font-bold text-xs uppercase tracking-wider leading-tight">ShipFlow AI</h1>
+              <h1 className="font-bold text-xs uppercase tracking-wider leading-tight">Velocity</h1>
               <span className="text-[9px] text-muted-foreground uppercase tracking-widest block font-medium">Delivery Engine</span>
             </div>
           </div>

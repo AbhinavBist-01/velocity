@@ -1,8 +1,8 @@
 import { z, zodUndefinedModel } from "../../schema";
-import { shipflowService } from "../../services";
+import { velocityService } from "../../services";
 import { publicProcedure, protectedProcedure, router } from "../../trpc";
 
-const TAGS = ["ShipFlow"];
+const TAGS = ["Velocity"];
 
 // Output Validation Schemas for OpenAPI Generation
 const ProjectSchema = z.object({
@@ -63,28 +63,28 @@ const AiReviewSchema = z.object({
   updatedAt: z.date(),
 });
 
-export const shipflowRouter = router({
+export const velocityRouter = router({
   getProjects: publicProcedure
-    .meta({ openapi: { method: "GET", path: "/shipflow/projects", tags: TAGS } })
+    .meta({ openapi: { method: "GET", path: "/velocity/projects", tags: TAGS } })
     .input(zodUndefinedModel)
     .output(z.array(ProjectSchema))
     .query(async () => {
-      return shipflowService.getProjects();
+      return velocityService.getProjects();
     }),
 
   getProjectDetails: publicProcedure
-    .meta({ openapi: { method: "GET", path: "/shipflow/projects/{id}", tags: TAGS } })
+    .meta({ openapi: { method: "GET", path: "/velocity/projects/{id}", tags: TAGS } })
     .input(z.object({ id: z.string() }))
     .output(z.object({
       project: ProjectSchema,
       features: z.array(FeatureSchema),
     }))
     .query(async ({ input }) => {
-      return shipflowService.getProjectDetails(input.id);
+      return velocityService.getProjectDetails(input.id);
     }),
 
   createProject: protectedProcedure
-    .meta({ openapi: { method: "POST", path: "/shipflow/projects", tags: TAGS } })
+    .meta({ openapi: { method: "POST", path: "/velocity/projects", tags: TAGS } })
     .input(
       z.object({
         name: z.string().min(1),
@@ -94,11 +94,11 @@ export const shipflowRouter = router({
     )
     .output(ProjectSchema)
     .mutation(async ({ input }) => {
-      return shipflowService.createProject(input.name, input.description, input.githubRepo);
+      return velocityService.createProject(input.name, input.description, input.githubRepo);
     }),
 
   getFeatureDetails: publicProcedure
-    .meta({ openapi: { method: "GET", path: "/shipflow/features/{id}", tags: TAGS } })
+    .meta({ openapi: { method: "GET", path: "/velocity/features/{id}", tags: TAGS } })
     .input(z.object({ id: z.string() }))
     .output(z.object({
       feature: FeatureSchema,
@@ -108,11 +108,11 @@ export const shipflowRouter = router({
       aiReview: AiReviewSchema.optional(),
     }))
     .query(async ({ input }) => {
-      return shipflowService.getFeatureDetails(input.id);
+      return velocityService.getFeatureDetails(input.id);
     }),
 
   createFeature: protectedProcedure
-    .meta({ openapi: { method: "POST", path: "/shipflow/features", tags: TAGS } })
+    .meta({ openapi: { method: "POST", path: "/velocity/features", tags: TAGS } })
     .input(
       z.object({
         projectId: z.string(),
@@ -123,7 +123,7 @@ export const shipflowRouter = router({
     )
     .output(FeatureSchema)
     .mutation(async ({ input }) => {
-      return shipflowService.createFeature(
+      return velocityService.createFeature(
         input.projectId,
         input.title,
         input.description,
@@ -132,15 +132,15 @@ export const shipflowRouter = router({
     }),
 
   forceProceedFeature: protectedProcedure
-    .meta({ openapi: { method: "POST", path: "/shipflow/features/{featureId}/proceed", tags: TAGS } })
+    .meta({ openapi: { method: "POST", path: "/velocity/features/{featureId}/proceed", tags: TAGS } })
     .input(z.object({ featureId: z.string() }))
     .output(FeatureSchema)
     .mutation(async ({ input }) => {
-      return shipflowService.forceProceedFeature(input.featureId);
+      return velocityService.forceProceedFeature(input.featureId);
     }),
 
   submitIntakeAnswers: protectedProcedure
-    .meta({ openapi: { method: "POST", path: "/shipflow/features/intake", tags: TAGS } })
+    .meta({ openapi: { method: "POST", path: "/velocity/features/intake", tags: TAGS } })
     .input(
       z.object({
         featureId: z.string(),
@@ -149,11 +149,11 @@ export const shipflowRouter = router({
     )
     .output(FeatureSchema)
     .mutation(async ({ input }) => {
-      return shipflowService.submitIntakeAnswers(input.featureId, input.answers);
+      return velocityService.submitIntakeAnswers(input.featureId, input.answers);
     }),
 
   approvePrd: protectedProcedure
-    .meta({ openapi: { method: "POST", path: "/shipflow/features/approve-prd", tags: TAGS } })
+    .meta({ openapi: { method: "POST", path: "/velocity/features/approve-prd", tags: TAGS } })
     .input(
       z.object({
         featureId: z.string(),
@@ -162,11 +162,11 @@ export const shipflowRouter = router({
     )
     .output(FeatureSchema)
     .mutation(async ({ input }) => {
-      return shipflowService.approvePrd(input.featureId, input.prdContent);
+      return velocityService.approvePrd(input.featureId, input.prdContent);
     }),
 
   updateTaskStatus: protectedProcedure
-    .meta({ openapi: { method: "POST", path: "/shipflow/tasks/status", tags: TAGS } })
+    .meta({ openapi: { method: "POST", path: "/velocity/tasks/status", tags: TAGS } })
     .input(
       z.object({
         taskId: z.string(),
@@ -175,52 +175,52 @@ export const shipflowRouter = router({
     )
     .output(TaskSchema)
     .mutation(async ({ input }) => {
-      return shipflowService.updateTaskStatus(input.taskId, input.status);
+      return velocityService.updateTaskStatus(input.taskId, input.status);
     }),
 
   initializeBranch: protectedProcedure
-    .meta({ openapi: { method: "POST", path: "/shipflow/features/initialize-branch", tags: TAGS } })
+    .meta({ openapi: { method: "POST", path: "/velocity/features/initialize-branch", tags: TAGS } })
     .input(z.object({ featureId: z.string() }))
     .output(PullRequestSchema)
     .mutation(async ({ input }) => {
-      return shipflowService.initializeBranch(input.featureId);
+      return velocityService.initializeBranch(input.featureId);
     }),
 
   runAiReview: protectedProcedure
-    .meta({ openapi: { method: "POST", path: "/shipflow/features/run-review", tags: TAGS } })
+    .meta({ openapi: { method: "POST", path: "/velocity/features/run-review", tags: TAGS } })
     .input(z.object({ featureId: z.string() }))
     .output(AiReviewSchema)
     .mutation(async ({ input }) => {
-      return shipflowService.runAiReview(input.featureId);
+      return velocityService.runAiReview(input.featureId);
     }),
 
   submitFixes: protectedProcedure
-    .meta({ openapi: { method: "POST", path: "/shipflow/features/submit-fixes", tags: TAGS } })
+    .meta({ openapi: { method: "POST", path: "/velocity/features/submit-fixes", tags: TAGS } })
     .input(z.object({ featureId: z.string() }))
     .output(z.object({
       pullRequest: PullRequestSchema,
       aiReview: AiReviewSchema,
     }))
     .mutation(async ({ input }) => {
-      return shipflowService.submitFixes(input.featureId);
+      return velocityService.submitFixes(input.featureId);
     }),
 
   approveRelease: protectedProcedure
-    .meta({ openapi: { method: "POST", path: "/shipflow/features/approve-release", tags: TAGS } })
+    .meta({ openapi: { method: "POST", path: "/velocity/features/approve-release", tags: TAGS } })
     .input(z.object({ featureId: z.string() }))
     .output(FeatureSchema)
     .mutation(async ({ input }) => {
-      return shipflowService.approveRelease(input.featureId);
+      return velocityService.approveRelease(input.featureId);
     }),
 
   shipFeature: protectedProcedure
-    .meta({ openapi: { method: "POST", path: "/shipflow/features/ship", tags: TAGS } })
+    .meta({ openapi: { method: "POST", path: "/velocity/features/ship", tags: TAGS } })
     .input(z.object({ featureId: z.string() }))
     .output(z.object({
       feature: FeatureSchema,
       releaseNotes: z.string(),
     }))
     .mutation(async ({ input }) => {
-      return shipflowService.shipFeature(input.featureId);
+      return velocityService.shipFeature(input.featureId);
     }),
 });
