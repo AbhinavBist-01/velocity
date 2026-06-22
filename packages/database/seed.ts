@@ -15,91 +15,14 @@ const pool = new pg.Pool({
 const db = drizzle(pool);
 
 async function seed() {
-  console.log("🌱 Seeding database...");
+  console.log("🌱 Cleaning database (removing hardcoded projects)...");
 
   try {
-    // 1. Clean up existing data to prevent duplicate primary key conflicts
     console.log("Deleting existing projects...");
     await db.delete(projectsTable);
-
-    // 2. Seed projects
-    console.log("Inserting projects...");
-    
-    const p1Result = await db
-      .insert(projectsTable)
-      .values({
-        name: "Velocity E-Commerce Engine",
-        description: "High-performance headless shopping backend configured with dynamic inventory tracking, microservices billing router, and regional distribution sync.",
-        githubRepo: "github.com/v-corp/velocity-engine",
-      })
-      .returning();
-    const project1 = p1Result[0];
-    if (!project1) throw new Error("Failed to insert project1");
-
-    const p2Result = await db
-      .insert(projectsTable)
-      .values({
-        name: "Velocity AI Core",
-        description: "Full-stack SaaS delivery platform that orchestrates product discoverability, automated code compliance checkups, and PM approvals.",
-        githubRepo: "github.com/velocity-org/core",
-      })
-      .returning();
-    const project2 = p2Result[0];
-    if (!project2) throw new Error("Failed to insert project2");
-
-    console.log("Created projects:", project1.name, ",", project2.name);
-
-    // 3. Seed features
-    console.log("Inserting features...");
-    
-    // Feature 1
-    await db.insert(featuresTable).values({
-      projectId: project1.id,
-      title: "Add Dark Theme Toggle",
-      description: "We should allow our shoppers to view the store in dark mode. This will improve customer retention rates during night hours.",
-      intakeChannel: "support",
-      status: "intake",
-      isEducated: false,
-      missingContext: [
-        { question: "What is the primary target user group for this feature?", answer: "" },
-        { question: "What are the key functional requirements or constraints we should enforce?", answer: "" },
-        { question: "Are there any specific third-party integrations (APIs, webhooks, databases) required?", answer: "" }
-      ],
-    });
-
-    // Feature 2
-    await db.insert(featuresTable).values({
-      projectId: project2.id,
-      title: "Integrate Stripe Checkout",
-      description: "Need subscription billing flow so our users can pay for tier upgrades using credit cards.",
-      intakeChannel: "email",
-      status: "intake",
-      isEducated: false,
-      missingContext: [
-        { question: "What is the primary target user group for this feature?", answer: "" },
-        { question: "What are the key functional requirements or constraints we should enforce?", answer: "" },
-        { question: "Are there any specific third-party integrations (APIs, webhooks, databases) required?", answer: "" }
-      ],
-    });
-
-    // Feature 3
-    await db.insert(featuresTable).values({
-      projectId: project1.id,
-      title: "Slack Notification Alerts",
-      description: "We want real-time notifications to be sent to our slack channel whenever a transaction value exceeds $1,000.",
-      intakeChannel: "direct",
-      status: "intake",
-      isEducated: false,
-      missingContext: [
-        { question: "What is the primary target user group for this feature?", answer: "" },
-        { question: "What are the key functional requirements or constraints we should enforce?", answer: "" },
-        { question: "Are there any specific third-party integrations (APIs, webhooks, databases) required?", answer: "" }
-      ],
-    });
-
-    console.log("🌱 Database seeded successfully!");
+    console.log("🌱 Database cleaned and hardcoded projects removed successfully!");
   } catch (err) {
-    console.error("Error seeding database:", err);
+    console.error("Error cleaning database:", err);
   } finally {
     await pool.end();
   }

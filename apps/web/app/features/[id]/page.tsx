@@ -118,7 +118,7 @@ export default function FeaturePipeline() {
   });
 
   // State
-  const [answers, setAnswers] = useState<string[]>(["", "", ""]);
+  const [answers, setAnswers] = useState<string[]>([]);
   const [prdText, setPrdText] = useState("");
   const [isEditingPrd, setIsEditingPrd] = useState(false);
   const [selectedFile, setSelectedFile] = useState<string>("");
@@ -129,6 +129,13 @@ export default function FeaturePipeline() {
   useEffect(() => {
     if (data?.feature?.prdContent) {
       setPrdText(data.feature.prdContent);
+    }
+    if (data?.feature?.missingContext) {
+      const mc = data.feature.missingContext as any[];
+      setAnswers(prev => {
+        if (prev.length === mc.length) return prev;
+        return mc.map(item => item.answer || "");
+      });
     }
     if (data?.pullRequest?.diffData) {
       const files = data.pullRequest.diffData as any[];
@@ -373,7 +380,7 @@ export default function FeaturePipeline() {
                       <Input
                         id={`q-${idx}`}
                         placeholder="Type response parameters..."
-                        value={answers[idx]}
+                        value={answers[idx] || ""}
                         onChange={(e) => handleAnswerChange(idx, e.target.value)}
                         className="rounded-none border-border bg-background focus:ring-0 focus:border-foreground text-xs py-5 font-mono"
                       />
