@@ -25,7 +25,7 @@ async function seed() {
     // 2. Seed projects
     console.log("Inserting projects...");
     
-    const [project1] = await db
+    const p1Result = await db
       .insert(projectsTable)
       .values({
         name: "Velocity E-Commerce Engine",
@@ -33,8 +33,10 @@ async function seed() {
         githubRepo: "github.com/v-corp/velocity-engine",
       })
       .returning();
+    const project1 = p1Result[0];
+    if (!project1) throw new Error("Failed to insert project1");
 
-    const [project2] = await db
+    const p2Result = await db
       .insert(projectsTable)
       .values({
         name: "Velocity AI Core",
@@ -42,6 +44,8 @@ async function seed() {
         githubRepo: "github.com/velocity-org/core",
       })
       .returning();
+    const project2 = p2Result[0];
+    if (!project2) throw new Error("Failed to insert project2");
 
     console.log("Created projects:", project1.name, ",", project2.name);
 

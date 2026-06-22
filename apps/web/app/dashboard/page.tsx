@@ -60,7 +60,6 @@ export default function Dashboard() {
               VL
             </div>
             <div>
-            <div>
               <h1 className="font-bold text-xs uppercase tracking-wider leading-tight">Velocity</h1>
               <span className="text-[9px] text-muted-foreground uppercase tracking-widest block font-medium">Delivery Engine</span>
               {user && (
