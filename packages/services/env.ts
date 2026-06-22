@@ -1,9 +1,15 @@
 import { z } from "zod";
 
+const emptyStringToUndefined = (value: unknown) =>
+  typeof value === "string" && value.trim() === "" ? undefined : value;
+
+const optionalEnvString = z.preprocess(emptyStringToUndefined, z.string().optional());
+
 const envSchema = z.object({
-  GOOGLE_OAUTH_CLIENT_ID: z.string().optional(),
-  GOOGLE_OAUTH_CLIENT_SECRET: z.string().optional(),
-  GOOGLE_OAUTH_REDIRECT_URI: z.string().optional(),
+  JWT_SECRET: z.string().min(1).describe("Secret key for signing JWT tokens"),
+  GOOGLE_OAUTH_CLIENT_ID: optionalEnvString,
+  GOOGLE_OAUTH_CLIENT_SECRET: optionalEnvString,
+  GOOGLE_OAUTH_REDIRECT_URI: optionalEnvString,
 });
 
 function createEnv(env: NodeJS.ProcessEnv) {

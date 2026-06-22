@@ -14,8 +14,12 @@ export const usersTable = pgTable("users", {
 
   email: varchar("email", { length: 255 }).notNull().unique(),
   emailVerified: boolean("email_verified").default(false),
+  role: varchar("role", { length: 20 }).notNull().default("creator"),
 
   profileImageUrl: text("profile_image_url"),
+
+  salt: text("salt"),
+  password: text("password"),
 
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").$onUpdate(() => new Date()),
