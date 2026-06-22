@@ -10,55 +10,70 @@ import {
 import { Button } from "~/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "~/components/ui/card";
 import { Badge } from "~/components/ui/badge";
+import { useUser } from "~/hooks/api/auth";
 
 export default function LandingPage() {
   const [activeStep, setActiveStep] = useState(3); // default to PR review step
+  const { user } = useUser();
 
   const pipelineSteps = [
     { id: 0, title: "Product Discovery", desc: "Intake context and customer interviews", status: "completed" },
     { id: 1, title: "PRD Specifications", desc: "Typesafe markdown spec sheets", status: "completed" },
     { id: 2, title: "Kanban Planning", desc: "Granular engineering sub-tasks", status: "completed" },
-    { id: 3, title: "AI PR Code Review", desc: "Inline validation & security checks", status: "active" },
-    { id: 4, title: "Release Sign-off", desc: "PM validation & automated changelogs", status: "pending" }
+    { id: 3, title: "PR Code Review", desc: "Inline AI compliance feedback", status: "active" },
+    { id: 4, title: "Shipping Release", desc: "Automated deploy and release notes", status: "pending" }
   ];
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans select-none overflow-x-hidden relative bg-grid-dots">
-      {/* Structural Top Border line */}
-      <div className="w-full h-1 bg-foreground" />
-
-      {/* Navigation Header */}
-      <header className="border-b border-border bg-background sticky top-0 z-50 px-6 py-4">
-        <div className="max-w-7xl w-full mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="h-9 w-9 bg-foreground text-background flex items-center justify-center font-black text-sm tracking-tighter">
-              VL
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="font-mono text-xs uppercase tracking-widest font-black">Velocity</span>
-                <span className="text-[9px] font-mono border border-foreground/30 px-1 py-0.2 leading-none uppercase text-muted-foreground">v1.0</span>
+    <div className="min-h-screen bg-background text-foreground flex flex-col selection:bg-foreground selection:text-background selection:rounded-none">
+      {/* Brutalist Header */}
+      <header className="border-b border-border sticky top-0 bg-background/80 backdrop-blur-sm z-50 px-6 py-4">
+        <div className="max-w-6xl mx-auto flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            <Link href="/" className="flex items-center gap-2 group">
+              <div className="size-8 rounded-none bg-foreground flex items-center justify-center transition-transform group-hover:rotate-6">
+                <Zap className="h-4 w-4 text-background fill-background" />
               </div>
-              <span className="text-[9px] text-muted-foreground uppercase font-mono tracking-wider block">Automated Delivery Engine</span>
-            </div>
+              <span className="font-mono text-sm font-black uppercase tracking-wider">
+                ShipFlow<span className="text-muted-foreground/60">.ai</span>
+              </span>
+            </Link>
+
+            <nav className="hidden md:flex items-center gap-6 text-xs font-mono uppercase tracking-widest text-muted-foreground">
+              <a href="#pipeline" className="hover:text-foreground transition-colors">01 // Pipeline</a>
+              <a href="#features" className="hover:text-foreground transition-colors">02 // Features</a>
+              <a href="http://localhost:8000/docs" target="_blank" rel="noopener noreferrer" className="hover:text-foreground flex items-center gap-1 transition-colors">
+                <span>03 // API Ref</span>
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            </nav>
           </div>
 
-          <nav className="hidden md:flex items-center gap-8 text-xs font-mono tracking-wider uppercase text-muted-foreground">
-            <a href="#features" className="hover:text-foreground hover:underline underline-offset-4 transition-all">01 // Features</a>
-            <a href="#workflow" className="hover:text-foreground hover:underline underline-offset-4 transition-all">02 // Workflow</a>
-            <a href="http://localhost:8000/docs" target="_blank" rel="noopener noreferrer" className="hover:text-foreground hover:underline underline-offset-4 transition-all flex items-center gap-1">
-              <span>03 // API Ref</span>
-              <ExternalLink className="h-3 w-3" />
-            </a>
-          </nav>
-
-          <div className="flex items-center gap-4">
-            <Link href="/dashboard">
-              <Button className="rounded-none font-mono text-xs uppercase tracking-widest bg-foreground text-background hover:bg-neutral-800 py-5 px-6 border border-foreground gap-1.5 transition-all">
-                <span>Go to Dashboard</span>
-                <ArrowRight className="h-3.5 w-3.5" />
-              </Button>
-            </Link>
+          <div className="flex items-center gap-3">
+            {user ? (
+              <>
+                <span className="text-[10px] font-mono text-muted-foreground hidden sm:inline-block bg-muted px-2 py-1 uppercase tracking-wider">{user.email}</span>
+                <Link href="/dashboard">
+                  <Button className="rounded-none font-mono text-xs uppercase tracking-widest bg-foreground text-background hover:bg-neutral-800 py-5 px-6 border border-foreground gap-1.5 transition-all">
+                    <span>Go to Dashboard</span>
+                    <ArrowRight className="h-3.5 w-3.5" />
+                  </Button>
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link href="/login">
+                  <Button variant="ghost" className="rounded-none font-mono text-xs uppercase tracking-widest hover:bg-muted py-5 px-4 transition-all">
+                    <span>Login</span>
+                  </Button>
+                </Link>
+                <Link href="/signup">
+                  <Button className="rounded-none font-mono text-xs uppercase tracking-widest bg-foreground text-background hover:bg-neutral-800 py-5 px-6 border border-foreground gap-1.5 transition-all">
+                    <span>Sign Up</span>
+                  </Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
@@ -83,9 +98,9 @@ export default function LandingPage() {
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto z-10">
-          <Link href="/dashboard" className="w-full sm:w-auto">
+          <Link href={user ? "/dashboard" : "/login"} className="w-full sm:w-auto">
             <Button size="lg" className="w-full sm:w-auto rounded-none py-6 px-10 font-mono text-xs uppercase tracking-widest bg-foreground text-background hover:bg-neutral-800 border-2 border-foreground transition-all gap-2 group">
-              <span>Open Dev Dashboard</span>
+              <span>{user ? "Open Dev Dashboard" : "Get Started Now"}</span>
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Button>
           </Link>

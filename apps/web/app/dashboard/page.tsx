@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { trpc } from "~/trpc/client";
-import { Plus, Github, ArrowRight, Kanban, Clock, Terminal, ChevronRight } from "lucide-react";
+import { Plus, Github, ArrowRight, Kanban, Clock, Terminal, ChevronRight, LogOut } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "~/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "~/components/ui/dialog";
@@ -11,9 +11,12 @@ import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
 import { toast } from "sonner";
 import { Spinner } from "~/components/ui/spinner";
+import { useLogout, useUser } from "~/hooks/api/auth";
 
 export default function Dashboard() {
   const utils = trpc.useUtils();
+  const { user } = useUser();
+  const { logout } = useLogout();
   const { data: projects, isLoading } = trpc.velocity.getProjects.useQuery();
   const createProjectMutation = trpc.velocity.createProject.useMutation({
     onSuccess: () => {
@@ -57,8 +60,14 @@ export default function Dashboard() {
               VL
             </div>
             <div>
+            <div>
               <h1 className="font-bold text-xs uppercase tracking-wider leading-tight">Velocity</h1>
               <span className="text-[9px] text-muted-foreground uppercase tracking-widest block font-medium">Delivery Engine</span>
+              {user && (
+                <span className="text-[8px] text-primary/80 uppercase tracking-wider block font-semibold mt-0.5 max-w-[150px] truncate">
+                  {user.fullName}
+                </span>
+              )}
             </div>
           </div>
 
@@ -71,6 +80,13 @@ export default function Dashboard() {
               <Kanban className="h-4 w-4" />
               <span>02 / Projects</span>
             </div>
+            <button
+              onClick={() => logout()}
+              className="flex w-full items-center gap-3 px-3 py-2 border border-transparent hover:border-destructive hover:text-destructive transition-all text-left font-mono"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>03 / Logout</span>
+            </button>
           </nav>
         </div>
 
