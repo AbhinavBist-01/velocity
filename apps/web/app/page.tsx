@@ -169,7 +169,7 @@ export default function LandingPage() {
               size="lg"
               className="w-full sm:w-auto rounded-none py-6 px-10 font-mono text-xs uppercase tracking-widest bg-foreground text-background hover:bg-foreground/80 border-2 border-foreground transition-all gap-2 group"
             >
-              <span>Open Dev Dashboard</span>
+              <span>Get Started</span>
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Button>
           </Link>
@@ -436,7 +436,7 @@ export default function LandingPage() {
               size="lg"
               className="rounded-none py-6 px-10 font-mono text-xs uppercase tracking-widest bg-foreground text-background hover:bg-foreground/80 border-2 border-foreground transition-all gap-1.5 hover:scale-105"
             >
-              <span>Get Started Free</span>
+              <span>Get Started</span>
               <ArrowRight className="h-4 w-4" />
             </Button>
           </Link>
