@@ -7,7 +7,8 @@ import { trpc } from "~/trpc/client";
 import { 
   ArrowLeft, CheckCircle2, AlertCircle, Play, RefreshCw, Send,
   ChevronRight, Kanban, GitPullRequest, ShieldCheck, Check,
-  AlertTriangle, Eye, ShieldAlert, Sparkles, Code, FileText, Lock, Terminal
+  AlertTriangle, Eye, ShieldAlert, Sparkles, Code, FileText, Lock, Terminal,
+  Plus, Trash2, Edit3, X, ArrowLeftRight
 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "~/components/ui/card";
@@ -61,7 +62,52 @@ export default function FeaturePipeline() {
       utils.velocity.getFeatureDetails.invalidate({ id: featureId });
     },
     onError: (err) => {
+      toast.error(`Error updating task status: ${err.message}`);
+    }
+  });
+
+  const createTaskMutation = trpc.velocity.createTask.useMutation({
+    onSuccess: () => {
+      utils.velocity.getFeatureDetails.invalidate({ id: featureId });
+      toast.success("Task created successfully.");
+      setShowCreateModal(false);
+      setNewTaskTitle("");
+      setNewTaskDescription("");
+      setNewTaskPriority("medium");
+    },
+    onError: (err) => {
+      toast.error(`Error creating task: ${err.message}`);
+    }
+  });
+
+  const updateTaskDetailsMutation = trpc.velocity.updateTask.useMutation({
+    onSuccess: () => {
+      utils.velocity.getFeatureDetails.invalidate({ id: featureId });
+      toast.success("Task updated successfully.");
+      setEditingTask(null);
+    },
+    onError: (err) => {
       toast.error(`Error updating task: ${err.message}`);
+    }
+  });
+
+  const deleteTaskMutation = trpc.velocity.deleteTask.useMutation({
+    onSuccess: () => {
+      utils.velocity.getFeatureDetails.invalidate({ id: featureId });
+      toast.success("Task deleted.");
+    },
+    onError: (err) => {
+      toast.error(`Error deleting task: ${err.message}`);
+    }
+  });
+
+  const approveTasksPlanMutation = trpc.velocity.approveTasksPlan.useMutation({
+    onSuccess: () => {
+      utils.velocity.getFeatureDetails.invalidate({ id: featureId });
+      toast.success("Plan approved successfully!");
+    },
+    onError: (err) => {
+      toast.error(`Error approving plan: ${err.message}`);
     }
   });
 
@@ -125,6 +171,25 @@ export default function FeaturePipeline() {
   const [releaseNotes, setReleaseNotes] = useState("");
   const [showConfetti, setShowConfetti] = useState(false);
 
+  // Kanban State
+  const [activeDragColumn, setActiveDragColumn] = useState<string | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [newTaskDescription, setNewTaskDescription] = useState("");
+  const [newTaskPriority, setNewTaskPriority] = useState("medium");
+
+  const [editingTask, setEditingTask] = useState<any | null>(null);
+  const [editTaskTitle, setEditTaskTitle] = useState("");
+  const [editTaskDescription, setEditTaskDescription] = useState("");
+  const [editTaskPriority, setEditTaskPriority] = useState("medium");
+
+  const startEditingTask = (t: any) => {
+    setEditingTask(t);
+    setEditTaskTitle(t.title);
+    setEditTaskDescription(t.description);
+    setEditTaskPriority(t.priority);
+  };
+
   // Sync PRD content when data loads
   useEffect(() => {
     if (data?.feature?.prdContent) {
@@ -184,12 +249,32 @@ export default function FeaturePipeline() {
     });
   };
 
+  const handleDragOver = (e: React.DragEvent, colStatus: string) => {
+    if (feature.status !== "tasks_breakdown") return;
+    e.preventDefault();
+    setActiveDragColumn(colStatus);
+  };
+
+  const handleDragLeave = () => {
+    setActiveDragColumn(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, colStatus: string) => {
+    setActiveDragColumn(null);
+    if (feature.status !== "tasks_breakdown") return;
+    const taskId = e.dataTransfer.getData("taskId");
+    if (taskId) {
+      updateTaskMutation.mutate({ taskId, status: colStatus });
+    }
+  };
+
   const getProgressPercentage = () => {
     switch (feature.status) {
       case "educated": return 100;
       case "intake": return 15;
       case "prd_generation": return 35;
-      case "tasks_breakdown": return 55;
+      case "tasks_breakdown": return 50;
+      case "plan_approved": return 65;
       case "pr_review": return 75;
       case "pr_approved": return 90;
       case "shipped": return 100;
@@ -199,11 +284,19 @@ export default function FeaturePipeline() {
 
   const getStepStatusIndicator = (stepName: string) => {
     const statusOrder = ["intake", "prd_generation", "tasks_breakdown", "pr_review", "pr_approved", "shipped"];
-    const currentIdx = statusOrder.indexOf(feature.status);
+    let currentStatus = feature.status;
+    if (currentStatus === "plan_approved") {
+      currentStatus = "tasks_breakdown";
+    }
+    const currentIdx = statusOrder.indexOf(currentStatus);
     const stepIdx = statusOrder.indexOf(stepName);
 
     if (feature.status === "educated") {
       return "[x] CLSD";
+    }
+
+    if (feature.status === "plan_approved" && stepName === "tasks_breakdown") {
+      return "[x] DONE";
     }
 
     if (currentIdx > stepIdx) {
@@ -217,7 +310,11 @@ export default function FeaturePipeline() {
 
   const getStepRowClass = (stepName: string) => {
     const statusOrder = ["intake", "prd_generation", "tasks_breakdown", "pr_review", "pr_approved", "shipped"];
-    const currentIdx = statusOrder.indexOf(feature.status);
+    let currentStatus = feature.status;
+    if (currentStatus === "plan_approved") {
+      currentStatus = "tasks_breakdown";
+    }
+    const currentIdx = statusOrder.indexOf(currentStatus);
     const stepIdx = statusOrder.indexOf(stepName);
 
     if (currentIdx === stepIdx) {
@@ -448,127 +545,336 @@ export default function FeaturePipeline() {
           )}
 
           {/* Phase 4: Tasks Breakdown & Planning */}
-          {feature.status === "tasks_breakdown" && (
-            <div className="max-w-3xl mx-auto space-y-6">
+          {(feature.status === "tasks_breakdown" || feature.status === "plan_approved") && (
+            <div className="max-w-5xl mx-auto space-y-6">
               <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 border-b border-border pb-6">
                 <div>
-                  <h2 className="text-xl font-black uppercase tracking-tight">Engineering Planning</h2>
-                  <p className="text-muted-foreground text-xs font-sans mt-0.5">The PRD requirements have been mapped to component-level developer tickets.</p>
+                  <h2 className="text-xl font-black uppercase tracking-tight flex items-center gap-2">
+                    <Kanban className="h-5 w-5 text-foreground animate-pulse" />
+                    <span>Engineering Board</span>
+                    {feature.status === "plan_approved" && (
+                      <Badge className="bg-emerald-600/10 text-emerald-500 border-emerald-600/20 text-[9px] uppercase tracking-wider rounded-none font-bold py-0.5 px-2.5">
+                        Approved
+                      </Badge>
+                    )}
+                  </h2>
+                  <p className="text-muted-foreground text-xs font-sans mt-0.5">
+                    {feature.status === "tasks_breakdown" 
+                      ? "Review, organize, add, edit, or drag-and-drop tasks to finalize the scope before development."
+                      : "The engineering scope is finalized. Launch the git environment to write code."
+                    }
+                  </p>
                 </div>
-                <Button
-                  onClick={() => initializeBranchMutation.mutate({ featureId })}
-                  disabled={initializeBranchMutation.isPending}
-                  className="gap-2 rounded-none py-5 px-6 bg-foreground text-background hover:bg-neutral-800 text-xs uppercase tracking-widest font-mono shrink-0 self-start sm:self-center"
-                >
-                  {initializeBranchMutation.isPending ? "Initializing Branch..." : "Initialize Branch & Pull Request"}
-                  <GitPullRequest className="h-4 w-4" />
-                </Button>
+                
+                <div className="flex items-center gap-2 shrink-0 self-start sm:self-center">
+                  {feature.status === "tasks_breakdown" ? (
+                    <>
+                      <Button
+                        onClick={() => setShowCreateModal(true)}
+                        variant="outline"
+                        className="gap-2 rounded-none py-5 px-4 border-border text-xs uppercase tracking-widest font-mono shrink-0 hover:border-foreground"
+                      >
+                        <Plus className="h-3.5 w-3.5" />
+                        <span>Add Task</span>
+                      </Button>
+                      <Button
+                        onClick={() => approveTasksPlanMutation.mutate({ featureId })}
+                        disabled={approveTasksPlanMutation.isPending}
+                        className="gap-2 rounded-none py-5 px-6 bg-foreground text-background hover:bg-neutral-800 text-xs uppercase tracking-widest font-mono shrink-0"
+                      >
+                        {approveTasksPlanMutation.isPending ? "Approving Plan..." : "Approve Plan & Proceed"}
+                        <Check className="h-4 w-4" />
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      onClick={() => initializeBranchMutation.mutate({ featureId })}
+                      disabled={initializeBranchMutation.isPending}
+                      className="gap-2 rounded-none py-5 px-6 bg-emerald-600 text-white hover:bg-emerald-700 text-xs uppercase tracking-widest font-mono shrink-0 border border-emerald-500"
+                    >
+                      {initializeBranchMutation.isPending ? "Initializing Branch..." : "Initialize Branch & Start Coding"}
+                      <GitPullRequest className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
               </div>
 
-              {/* Kanban-like list */}
+              {/* Kanban columns */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono text-xs">
-                {/* To Do */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-border pb-2 px-1">
-                    <span className="font-bold uppercase tracking-wider text-muted-foreground">01 / To Do</span>
-                    <span className="border border-border/80 px-2 py-0.5 text-[10px] text-muted-foreground">{tasks.filter(t => t.status === "todo").length}</span>
-                  </div>
+                {[
+                  { id: "todo", label: "01 / To Do", colorClass: "text-muted-foreground" },
+                  { id: "in_progress", label: "02 / In Progress", colorClass: "text-foreground" },
+                  { id: "done", label: "03 / Done", colorClass: "text-muted-foreground/60" }
+                ].map((col) => {
+                  const columnTasks = tasks.filter((t) => t.status === col.id);
+                  const isDragActive = activeDragColumn === col.id;
                   
-                  <div className="space-y-3">
-                    {tasks.filter(t => t.status === "todo").map(t => (
-                      <div key={t.id} className="border border-border bg-card p-4 space-y-3 relative group hover:border-foreground transition-all">
-                        <div className="flex items-center justify-between">
-                          <span className={`border px-1.5 py-0.2 text-[9px] uppercase font-bold ${
-                            t.priority === "high" ? "border-foreground bg-foreground text-background" : "border-border text-muted-foreground"
-                          }`}>
-                            {t.priority}
-                          </span>
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            onClick={() => updateTaskMutation.mutate({ taskId: t.id, status: "in_progress" })}
-                            className="h-5 w-5 rounded-none border border-border hover:border-foreground hover:bg-foreground hover:text-background text-muted-foreground"
-                          >
-                            <ChevronRight className="h-3 w-3" />
-                          </Button>
-                        </div>
-                        <h4 className="font-bold text-xs uppercase text-foreground leading-tight">{t.title}</h4>
-                        <p className="text-muted-foreground text-[10px] font-sans leading-relaxed">{t.description}</p>
+                  return (
+                    <div 
+                      key={col.id} 
+                      onDragOver={(e) => handleDragOver(e, col.id)}
+                      onDragLeave={handleDragLeave}
+                      onDrop={(e) => handleDrop(e, col.id)}
+                      className={`space-y-4 p-2 transition-all border ${
+                        isDragActive 
+                          ? "border-dashed border-foreground bg-foreground/[0.03]" 
+                          : "border-transparent"
+                      }`}
+                    >
+                      <div className="flex items-center justify-between border-b border-border pb-2 px-1">
+                        <span className={`font-bold uppercase tracking-wider ${col.colorClass}`}>{col.label}</span>
+                        <span className="border border-border/80 px-2 py-0.5 text-[10px] text-muted-foreground">{columnTasks.length}</span>
                       </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* In Progress */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-border pb-2 px-1">
-                    <span className="font-bold uppercase tracking-wider text-foreground">02 / In Progress</span>
-                    <span className="border border-foreground px-2 py-0.5 text-[10px] text-foreground font-bold">{tasks.filter(t => t.status === "in_progress").length}</span>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    {tasks.filter(t => t.status === "in_progress").map(t => (
-                      <div key={t.id} className="border border-foreground bg-foreground/[0.02] p-4 space-y-3 relative">
-                        <div className="flex items-center justify-between">
-                          <span className="border border-foreground bg-foreground text-background px-1.5 py-0.2 text-[9px] uppercase font-bold">
-                            {t.priority}
-                          </span>
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              onClick={() => updateTaskMutation.mutate({ taskId: t.id, status: "todo" })}
-                              className="h-5 w-5 rounded-none border border-border hover:border-foreground hover:bg-foreground hover:text-background text-muted-foreground"
-                            >
-                              <ArrowLeft className="h-3 w-3" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              onClick={() => updateTaskMutation.mutate({ taskId: t.id, status: "done" })}
-                              className="h-5 w-5 rounded-none border border-foreground hover:bg-foreground hover:text-background text-foreground"
-                            >
-                              <Check className="h-3 w-3" />
-                            </Button>
+                      
+                      <div className="space-y-3 min-h-[350px] flex flex-col justify-start">
+                        {columnTasks.map((t) => (
+                          <div 
+                            key={t.id} 
+                            draggable={feature.status === "tasks_breakdown"}
+                            onDragStart={(e) => e.dataTransfer.setData("taskId", t.id)}
+                            className={`border bg-card p-4 space-y-3 relative group transition-all ${
+                              feature.status === "tasks_breakdown" 
+                                ? "hover:border-foreground cursor-grab active:cursor-grabbing" 
+                                : "opacity-85"
+                            } ${t.status === "done" ? "border-border/45 opacity-70 bg-muted/5" : "border-border"}`}
+                          >
+                            <div className="flex items-center justify-between gap-2">
+                              <span className={`border px-1.5 py-0.2 text-[9px] uppercase font-bold shrink-0 ${
+                                t.priority === "high" ? "border-red-500 text-red-500 bg-red-500/5" : t.priority === "medium" ? "border-amber-500 text-amber-500 bg-amber-500/5" : "border-border text-muted-foreground"
+                              }`}>
+                                {t.priority}
+                              </span>
+                              
+                              {/* Edit / Delete / Move Buttons */}
+                              {feature.status === "tasks_breakdown" ? (
+                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-5 w-5 rounded-none border border-border text-muted-foreground hover:text-foreground hover:bg-background"
+                                    onClick={() => startEditingTask(t)}
+                                  >
+                                    <Edit3 className="h-3 w-3" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-5 w-5 rounded-none border border-border text-red-500 hover:text-red-600 hover:bg-background"
+                                    onClick={() => {
+                                      if (confirm(`Delete task "${t.title}"?`)) {
+                                        deleteTaskMutation.mutate({ taskId: t.id });
+                                      }
+                                    }}
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-1">
+                                  <Lock className="h-3 w-3 text-muted-foreground/40" />
+                                </div>
+                              )}
+                            </div>
+                            
+                            <h4 className={`font-bold text-xs uppercase text-foreground leading-tight ${t.status === "done" ? "line-through text-muted-foreground/60" : ""}`}>{t.title}</h4>
+                            <p className={`text-muted-foreground text-[10px] font-sans leading-relaxed ${t.status === "done" ? "line-through" : ""}`}>{t.description}</p>
+                            
+                            {/* Directional Move Buttons */}
+                            {feature.status === "tasks_breakdown" && (
+                              <div className="flex justify-end gap-1.5 pt-1">
+                                {t.status !== "todo" && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => updateTaskMutation.mutate({ taskId: t.id, status: t.status === "done" ? "in_progress" : "todo" })}
+                                    className="h-5 w-5 rounded-none border border-border hover:border-foreground hover:bg-foreground hover:text-background text-muted-foreground"
+                                  >
+                                    <ArrowLeft className="h-3 w-3" />
+                                  </Button>
+                                )}
+                                {t.status !== "done" && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => updateTaskMutation.mutate({ taskId: t.id, status: t.status === "todo" ? "in_progress" : "done" })}
+                                    className="h-5 w-5 rounded-none border border-border hover:border-foreground hover:bg-foreground hover:text-background text-muted-foreground"
+                                  >
+                                    <ChevronRight className="h-3 w-3" />
+                                  </Button>
+                                )}
+                              </div>
+                            )}
                           </div>
-                        </div>
-                        <h4 className="font-bold text-xs uppercase text-foreground leading-tight">{t.title}</h4>
-                        <p className="text-muted-foreground text-[10px] font-sans leading-relaxed">{t.description}</p>
+                        ))}
+                        
+                        {columnTasks.length === 0 && (
+                          <div className="border border-dashed border-border/40 p-8 text-center text-muted-foreground/40 font-sans text-[10px] rounded-none uppercase tracking-wider">
+                            Empty Column
+                          </div>
+                        )}
                       </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Done */}
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between border-b border-border pb-2 px-1">
-                    <span className="font-bold uppercase tracking-wider text-muted-foreground/60">03 / Done</span>
-                    <span className="border border-border/40 px-2 py-0.5 text-[10px] text-muted-foreground/60">{tasks.filter(t => t.status === "done").length}</span>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    {tasks.filter(t => t.status === "done").map(t => (
-                      <div key={t.id} className="border border-border/40 bg-muted/10 p-4 space-y-3 relative opacity-60">
-                        <div className="flex items-center justify-between">
-                          <span className="border border-border/40 text-muted-foreground/60 px-1.5 py-0.2 text-[9px] uppercase font-bold">
-                            {t.priority}
-                          </span>
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            onClick={() => updateTaskMutation.mutate({ taskId: t.id, status: "in_progress" })}
-                            className="h-5 w-5 rounded-none border border-border/40 hover:border-foreground hover:bg-foreground hover:text-background text-muted-foreground/60"
-                          >
-                            <ArrowLeft className="h-3 w-3" />
-                          </Button>
-                        </div>
-                        <h4 className="font-bold text-xs uppercase text-muted-foreground/60 line-through leading-tight">{t.title}</h4>
-                        <p className="text-muted-foreground text-[10px] font-sans line-through leading-relaxed">{t.description}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+                    </div>
+                  );
+                })}
               </div>
+
+              {/* Add Custom Task Modal */}
+              {showCreateModal && (
+                <div className="fixed inset-0 bg-background/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+                  <div className="border border-border bg-card p-6 w-full max-w-md font-mono text-xs space-y-4 shadow-2xl relative">
+                    <Button 
+                      variant="ghost"
+                      size="icon" 
+                      className="absolute top-2 right-2 h-6 w-6 rounded-none border border-border text-muted-foreground hover:text-foreground hover:bg-background"
+                      onClick={() => setShowCreateModal(false)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                    <div className="flex items-center gap-2 border-b border-border pb-2">
+                      <Kanban className="h-4 w-4 text-foreground" />
+                      <h3 className="text-sm font-bold uppercase tracking-tight">Create Developer Ticket</h3>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-muted-foreground uppercase font-bold">Ticket Title</label>
+                        <Input 
+                          value={newTaskTitle}
+                          onChange={(e) => setNewTaskTitle(e.target.value)}
+                          placeholder="e.g. Implement user login routes"
+                          className="rounded-none border-border focus-visible:ring-1 focus-visible:ring-foreground bg-background text-xs font-mono"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-muted-foreground uppercase font-bold">Description</label>
+                        <Textarea 
+                          value={newTaskDescription}
+                          onChange={(e) => setNewTaskDescription(e.target.value)}
+                          placeholder="Describe acceptance criteria & details..."
+                          rows={3}
+                          className="rounded-none border-border focus-visible:ring-1 focus-visible:ring-foreground bg-background text-xs font-mono"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-muted-foreground uppercase font-bold">Priority</label>
+                        <select 
+                          value={newTaskPriority}
+                          onChange={(e) => setNewTaskPriority(e.target.value)}
+                          className="w-full border border-border rounded-none bg-background text-xs font-mono p-2 focus-visible:outline-none focus-visible:border-foreground"
+                        >
+                          <option value="high">High</option>
+                          <option value="medium">Medium</option>
+                          <option value="low">Low</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2 border-t border-border pt-4">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setShowCreateModal(false)}
+                        className="rounded-none text-[10px] uppercase font-mono tracking-wider border-border hover:border-foreground"
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        onClick={() => {
+                          if (!newTaskTitle.trim()) {
+                            toast.error("Title is required");
+                            return;
+                          }
+                          createTaskMutation.mutate({
+                            featureId,
+                            title: newTaskTitle,
+                            description: newTaskDescription,
+                            priority: newTaskPriority
+                          });
+                        }}
+                        disabled={createTaskMutation.isPending}
+                        className="rounded-none text-[10px] bg-foreground text-background hover:bg-neutral-800 uppercase font-mono tracking-wider"
+                      >
+                        {createTaskMutation.isPending ? "Creating..." : "Create Ticket"}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Edit Task Modal */}
+              {editingTask && (
+                <div className="fixed inset-0 bg-background/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+                  <div className="border border-border bg-card p-6 w-full max-w-md font-mono text-xs space-y-4 shadow-2xl relative">
+                    <Button 
+                      variant="ghost"
+                      size="icon" 
+                      className="absolute top-2 right-2 h-6 w-6 rounded-none border border-border text-muted-foreground hover:text-foreground hover:bg-background"
+                      onClick={() => setEditingTask(null)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                    <div className="flex items-center gap-2 border-b border-border pb-2">
+                      <Edit3 className="h-4 w-4 text-foreground" />
+                      <h3 className="text-sm font-bold uppercase tracking-tight">Edit Developer Ticket</h3>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-muted-foreground uppercase font-bold">Ticket Title</label>
+                        <Input 
+                          value={editTaskTitle}
+                          onChange={(e) => setEditTaskTitle(e.target.value)}
+                          className="rounded-none border-border focus-visible:ring-1 focus-visible:ring-foreground bg-background text-xs font-mono"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-muted-foreground uppercase font-bold">Description</label>
+                        <Textarea 
+                          value={editTaskDescription}
+                          onChange={(e) => setEditTaskDescription(e.target.value)}
+                          rows={3}
+                          className="rounded-none border-border focus-visible:ring-1 focus-visible:ring-foreground bg-background text-xs font-mono"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] text-muted-foreground uppercase font-bold">Priority</label>
+                        <select 
+                          value={editTaskPriority}
+                          onChange={(e) => setEditTaskPriority(e.target.value)}
+                          className="w-full border border-border rounded-none bg-background text-xs font-mono p-2 focus-visible:outline-none focus-visible:border-foreground"
+                        >
+                          <option value="high">High</option>
+                          <option value="medium">Medium</option>
+                          <option value="low">Low</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="flex justify-end gap-2 border-t border-border pt-4">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => setEditingTask(null)}
+                        className="rounded-none text-[10px] uppercase font-mono tracking-wider border-border hover:border-foreground"
+                      >
+                        Cancel
+                      </Button>
+                      <Button 
+                        onClick={() => {
+                          if (!editTaskTitle.trim()) {
+                            toast.error("Title is required");
+                            return;
+                          }
+                          updateTaskDetailsMutation.mutate({
+                            taskId: editingTask.id,
+                            title: editTaskTitle,
+                            description: editTaskDescription,
+                            priority: editTaskPriority
+                          });
+                        }}
+                        disabled={updateTaskDetailsMutation.isPending}
+                        className="rounded-none text-[10px] bg-foreground text-background hover:bg-neutral-800 uppercase font-mono tracking-wider"
+                      >
+                        {updateTaskDetailsMutation.isPending ? "Saving..." : "Save Changes"}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

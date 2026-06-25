@@ -394,6 +394,69 @@ Respond ONLY with a JSON array in this exact format:
     return task;
   }
 
+  public async createTask(
+    featureId: string,
+    title: string,
+    description: string,
+    priority: string
+  ): Promise<SelectTask> {
+    const [task] = await db
+      .insert(tasksTable)
+      .values({
+        featureId,
+        title,
+        description,
+        priority,
+        status: "todo",
+      })
+      .returning();
+    if (!task) throw new Error("Failed to create task");
+    return task;
+  }
+
+  public async updateTask(
+    taskId: string,
+    title: string,
+    description: string,
+    priority: string
+  ): Promise<SelectTask> {
+    const [task] = await db
+      .update(tasksTable)
+      .set({
+        title,
+        description,
+        priority,
+      })
+      .where(eq(tasksTable.id, taskId))
+      .returning();
+    if (!task) throw new Error("Failed to update task");
+    return task;
+  }
+
+  public async deleteTask(taskId: string): Promise<{ success: boolean }> {
+    const [task] = await db
+      .delete(tasksTable)
+      .where(eq(tasksTable.id, taskId))
+      .returning();
+    if (!task) throw new Error("Failed to delete task");
+    return { success: true };
+  }
+
+  public async approveTasksPlan(featureId: string): Promise<SelectFeature> {
+    const [feature] = await db.select().from(featuresTable).where(eq(featuresTable.id, featureId)).limit(1);
+    if (!feature) throw new Error("Feature not found");
+
+    const [updatedFeature] = await db
+      .update(featuresTable)
+      .set({
+        status: "plan_approved",
+      })
+      .where(eq(featuresTable.id, featureId))
+      .returning();
+    if (!updatedFeature) throw new Error("Failed to update feature");
+    return updatedFeature;
+  }
+
   // 4. Git Branch & Pull Request
   public async initializeBranch(featureId: string): Promise<SelectPullRequest> {
     const [feature] = await db.select().from(featuresTable).where(eq(featuresTable.id, featureId)).limit(1);

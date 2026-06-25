@@ -93,6 +93,8 @@ export default function ProjectDetails() {
         return <span className="border border-foreground/30 px-2 py-0.5 text-[9px] uppercase tracking-wider font-bold bg-background text-foreground">PRD Specs</span>;
       case "tasks_breakdown":
         return <span className="border border-foreground/30 px-2 py-0.5 text-[9px] uppercase tracking-wider font-bold bg-background text-foreground">Planning</span>;
+      case "plan_approved":
+        return <span className="border border-foreground bg-foreground px-2 py-0.5 text-[9px] uppercase tracking-wider font-bold text-background">Plan Approved</span>;
       case "pr_review":
         return <span className="border border-foreground/30 px-2 py-0.5 text-[9px] uppercase tracking-wider font-bold bg-background text-foreground">AI PR Review</span>;
       case "pr_approved":

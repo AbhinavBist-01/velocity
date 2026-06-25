@@ -178,6 +178,56 @@ export const velocityRouter = router({
       return velocityService.updateTaskStatus(input.taskId, input.status);
     }),
 
+  createTask: protectedProcedure
+    .meta({ openapi: { method: "POST", path: "/velocity/tasks/create", tags: TAGS } })
+    .input(
+      z.object({
+        featureId: z.string(),
+        title: z.string().min(1),
+        description: z.string(),
+        priority: z.string(),
+      })
+    )
+    .output(TaskSchema)
+    .mutation(async ({ input }) => {
+      return velocityService.createTask(input.featureId, input.title, input.description, input.priority);
+    }),
+
+  updateTask: protectedProcedure
+    .meta({ openapi: { method: "POST", path: "/velocity/tasks/update", tags: TAGS } })
+    .input(
+      z.object({
+        taskId: z.string(),
+        title: z.string().min(1),
+        description: z.string(),
+        priority: z.string(),
+      })
+    )
+    .output(TaskSchema)
+    .mutation(async ({ input }) => {
+      return velocityService.updateTask(input.taskId, input.title, input.description, input.priority);
+    }),
+
+  deleteTask: protectedProcedure
+    .meta({ openapi: { method: "POST", path: "/velocity/tasks/delete", tags: TAGS } })
+    .input(
+      z.object({
+        taskId: z.string(),
+      })
+    )
+    .output(z.object({ success: z.boolean() }))
+    .mutation(async ({ input }) => {
+      return velocityService.deleteTask(input.taskId);
+    }),
+
+  approveTasksPlan: protectedProcedure
+    .meta({ openapi: { method: "POST", path: "/velocity/features/approve-tasks-plan", tags: TAGS } })
+    .input(z.object({ featureId: z.string() }))
+    .output(FeatureSchema)
+    .mutation(async ({ input }) => {
+      return velocityService.approveTasksPlan(input.featureId);
+    }),
+
   initializeBranch: protectedProcedure
     .meta({ openapi: { method: "POST", path: "/velocity/features/initialize-branch", tags: TAGS } })
     .input(z.object({ featureId: z.string() }))
