@@ -99,7 +99,7 @@ export default function LandingPage() {
         <div className="max-w-7xl w-full mx-auto flex items-center justify-between">
 
           {/* Logo */}
-          <div className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3 hover:opacity-85 transition-all">
             <div className="h-9 w-9 bg-foreground text-background flex items-center justify-center font-black text-sm tracking-tighter">
               VL
             </div>
@@ -110,7 +110,7 @@ export default function LandingPage() {
               </div>
               <span className="text-[9px] text-muted-foreground uppercase font-mono tracking-wider block">Automated Delivery Engine</span>
             </div>
-          </div>
+          </Link>
 
           {/* Nav links */}
           <nav className="hidden md:flex items-center gap-8 text-xs font-mono tracking-wider uppercase text-muted-foreground">

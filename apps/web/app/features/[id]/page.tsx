@@ -6,9 +6,9 @@ import { useParams, useRouter } from "next/navigation";
 import { trpc } from "~/trpc/client";
 import { 
   ArrowLeft, CheckCircle2, AlertCircle, Play, RefreshCw, Send,
-  ChevronRight, Kanban, GitPullRequest, ShieldCheck, Check,
+  ChevronRight, ChevronLeft, Kanban, GitPullRequest, ShieldCheck, Check,
   AlertTriangle, Eye, ShieldAlert, Sparkles, Code, FileText, Lock, Terminal,
-  Plus, Trash2, Edit3, X, ArrowLeftRight
+  Plus, Trash2, Edit3, X, ArrowLeftRight, LogOut
 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "~/components/ui/card";
@@ -18,12 +18,28 @@ import { Badge } from "~/components/ui/badge";
 import { Progress } from "~/components/ui/progress";
 import { toast } from "sonner";
 import { Spinner } from "~/components/ui/spinner";
+import { useLogout } from "~/hooks/api/auth";
 
 export default function FeaturePipeline() {
   const params = useParams();
   const router = useRouter();
   const featureId = params.id as string;
   const utils = trpc.useUtils();
+  const { logout } = useLogout();
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("sidebar-collapsed");
+    if (saved === "true") {
+      setIsCollapsed(true);
+    }
+  }, []);
+
+  const toggleSidebar = () => {
+    const next = !isCollapsed;
+    setIsCollapsed(next);
+    localStorage.setItem("sidebar-collapsed", String(next));
+  };
 
   const { data, isLoading } = trpc.velocity.getFeatureDetails.useQuery({ id: featureId });
   
@@ -368,11 +384,21 @@ export default function FeaturePipeline() {
       {/* Page Layout */}
       <div className="flex-1 flex overflow-hidden">
         {/* Sidebar Steps */}
-        <aside className="w-80 border-r border-border bg-card p-6 flex flex-col justify-between hidden md:flex shrink-0">
-          <div className="space-y-6">
-            <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest">// Delivery Pipeline</div>
+        <aside className={`${isCollapsed ? "w-16 px-2 py-6" : "w-80 p-6"} border-r border-border bg-card/85 backdrop-blur-md flex flex-col justify-between shrink-0 hidden md:flex transition-all duration-300 relative`}>
+          <div>
+            <div className="flex items-center justify-center mb-6 relative w-full">
+              {!isCollapsed && <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest w-full text-left">// Delivery Pipeline</div>}
+              {isCollapsed && <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest text-center w-full">// Pipe</div>}
+              <button
+                onClick={toggleSidebar}
+                className="absolute -right-5 top-[-4px] p-1 border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-200 z-20"
+                title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+              >
+                {isCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
+              </button>
+            </div>
             
-            <div className="space-y-2">
+            <div className="space-y-2 w-full">
               {[
                 { name: "intake", label: "Discovery Intake" },
                 { name: "prd_generation", label: "Requirements Spec" },
@@ -381,23 +407,48 @@ export default function FeaturePipeline() {
                 { name: "pr_approved", label: "Release Readiness" },
                 { name: "shipped", label: "Shipped to Prod" }
               ].map((step, idx) => (
-                <div key={step.name} className={`flex items-center justify-between p-2.5 border text-xs ${getStepRowClass(step.name)}`}>
-                  <div className="flex items-center gap-2">
+                <div
+                  key={step.name}
+                  title={step.label}
+                  className={`flex items-center transition-all duration-200 border ${
+                    isCollapsed 
+                      ? "h-10 w-10 justify-center mx-auto p-0" 
+                      : "justify-between p-2.5 text-xs"
+                  } ${getStepRowClass(step.name)}`}
+                >
+                  <div className={`flex items-center ${isCollapsed ? "" : "gap-2"}`}>
                     <span className="text-[10px] opacity-60">0{idx + 1}</span>
-                    <span>{step.label}</span>
+                    {!isCollapsed && <span>{step.label}</span>}
                   </div>
-                  <span className="text-[10px] font-bold font-mono">{getStepStatusIndicator(step.name)}</span>
+                  {!isCollapsed && <span className="text-[10px] font-bold font-mono">{getStepStatusIndicator(step.name)}</span>}
                 </div>
               ))}
             </div>
           </div>
 
-          <div className="p-4 border border-border bg-background text-[10px] text-muted-foreground leading-relaxed">
-            <div className="flex items-center gap-2 mb-1.5 text-foreground font-bold uppercase tracking-widest">
-              <Terminal className="h-3.5 w-3.5 text-foreground" />
-              <span>Velocity Engine</span>
-            </div>
-            <p>Monitors code paths, cross-references acceptance criteria, and blocks deployment if specs aren't fulfilled.</p>
+          <div className="space-y-4 w-full">
+            {!isCollapsed && (
+              <div className="p-4 border border-border bg-background/50 text-[10px] text-muted-foreground leading-relaxed">
+                <div className="flex items-center gap-2 mb-1.5 text-foreground font-bold uppercase tracking-widest">
+                  <Terminal className="h-3.5 w-3.5 text-foreground" />
+                  <span>Velocity Engine</span>
+                </div>
+                <p>Monitors code paths, cross-references acceptance criteria, and blocks deployment if specs aren't fulfilled.</p>
+              </div>
+            )}
+
+            <button
+              onClick={() => logout()}
+              title="Logout"
+              className={`flex items-center transition-all duration-200 border border-transparent hover:border-destructive hover:text-destructive hover:bg-destructive/10 font-mono text-xs uppercase tracking-wider ${
+                isCollapsed 
+                  ? "h-10 w-10 justify-center mx-auto p-0 text-muted-foreground" 
+                  : "px-3 py-2.5 gap-3 w-full text-left"
+              }`}
+            >
+              <LogOut className="h-4 w-4 shrink-0" />
+              {!isCollapsed && <span>Logout</span>}
+            </button>
           </div>
         </aside>
 

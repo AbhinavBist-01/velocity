@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { trpc } from "~/trpc/client";
 import { 
   ArrowLeft, Plus, Github, Clock, CheckCircle, HelpCircle, 
-  ChevronRight, Mail, Ticket, PhoneCall, Terminal, ShieldAlert, GitPullRequest, Code, FileText
+  ChevronRight, ChevronLeft, Mail, Ticket, PhoneCall, Terminal, ShieldAlert, GitPullRequest, Code, FileText, LogOut, Folder
 } from "lucide-react";
 import { Button } from "~/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "~/components/ui/card";
@@ -18,12 +18,28 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Badge } from "~/components/ui/badge";
 import { toast } from "sonner";
 import { Spinner } from "~/components/ui/spinner";
+import { useLogout } from "~/hooks/api/auth";
 
 export default function ProjectDetails() {
   const params = useParams();
   const router = useRouter();
   const projectId = params.id as string;
   const utils = trpc.useUtils();
+  const { logout } = useLogout();
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("sidebar-collapsed");
+    if (saved === "true") {
+      setIsCollapsed(true);
+    }
+  }, []);
+
+  const toggleSidebar = () => {
+    const next = !isCollapsed;
+    setIsCollapsed(next);
+    localStorage.setItem("sidebar-collapsed", String(next));
+  };
 
   const { data: details, isLoading } = trpc.velocity.getProjectDetails.useQuery({ id: projectId });
   const createFeatureMutation = trpc.velocity.createFeature.useMutation({
@@ -140,39 +156,82 @@ export default function ProjectDetails() {
   return (
     <div className="flex min-h-screen bg-background text-foreground font-mono bg-grid-dots relative">
       {/* Sidebar */}
-      <aside className="w-64 border-r border-border bg-card p-6 flex flex-col justify-between shrink-0 hidden md:flex">
+      <aside className={`${isCollapsed ? "w-16 px-2 py-6" : "w-64 p-6"} border-r border-border bg-card/85 backdrop-blur-md flex flex-col justify-between shrink-0 hidden md:flex transition-all duration-300 relative`}>
         <div>
-          <div className="flex items-center gap-3 mb-8">
-            <div className="h-9 w-9 bg-foreground text-background flex items-center justify-center font-black text-sm tracking-tighter">
-              VL
-            </div>
-            <div>
-              <h1 className="font-bold text-xs uppercase tracking-wider leading-tight">Velocity</h1>
-              <span className="text-[9px] text-muted-foreground uppercase tracking-widest block font-medium">Delivery Engine</span>
-            </div>
+          <div className="flex items-center justify-center mb-8 relative w-full">
+            <Link href="/" className={`flex items-center ${isCollapsed ? "justify-center" : "gap-3"} w-full`}>
+              <div className="h-9 w-9 bg-foreground text-background flex items-center justify-center font-black text-sm tracking-tighter shrink-0">
+                VL
+              </div>
+              {!isCollapsed && (
+                <div>
+                  <h1 className="font-bold text-xs uppercase tracking-wider leading-tight">Velocity</h1>
+                  <span className="text-[9px] text-muted-foreground uppercase tracking-widest block font-medium">Delivery Engine</span>
+                </div>
+              )}
+            </Link>
+            <button
+              onClick={toggleSidebar}
+              className="absolute -right-5 top-1.5 p-1 border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-200 z-20"
+              title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+            >
+              {isCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
+            </button>
           </div>
 
-          <nav className="space-y-1.5 text-xs uppercase tracking-wider">
-            <Link href="/" className="flex items-center gap-3 px-3 py-2 border border-transparent hover:border-border transition-all">
-              <Clock className="h-4 w-4 text-muted-foreground" />
-              <span>Projects</span>
+          <nav className="space-y-2 text-xs uppercase tracking-wider w-full">
+            <Link
+              href="/dashboard"
+              title="Projects"
+              className={`flex items-center transition-all duration-200 border border-transparent hover:border-border ${
+                isCollapsed 
+                  ? "h-10 w-10 justify-center mx-auto p-0" 
+                  : "px-3 py-2.5 gap-3 w-full"
+              }`}
+            >
+              <Folder className="h-4 w-4 shrink-0 text-muted-foreground" />
+              {!isCollapsed && <span>Projects</span>}
             </Link>
-            <div className="flex items-center gap-3 px-3 py-2 border border-foreground bg-foreground text-background font-bold transition-all">
-              <Github className="h-4 w-4" />
-              <span className="truncate">{project.name}</span>
+            <div
+              title={project.name}
+              className={`flex items-center transition-all duration-200 border border-foreground bg-foreground text-background font-bold ${
+                isCollapsed 
+                  ? "h-10 w-10 justify-center mx-auto p-0" 
+                  : "px-3 py-2.5 gap-3 w-full"
+              }`}
+            >
+              <Github className="h-4 w-4 shrink-0" />
+              {!isCollapsed && <span className="truncate">{project.name}</span>}
             </div>
           </nav>
         </div>
 
-        <div className="p-4 border border-border bg-background text-[10px] text-muted-foreground leading-relaxed">
-          <p className="font-bold text-foreground mb-1 uppercase tracking-widest">// PAIR_PROG_ACTIVE</p>
-          <p>Move features from idea to prod with typesafe AI guidance hooks.</p>
+        <div className="space-y-4 w-full">
+          {!isCollapsed && (
+            <div className="p-4 border border-border bg-background/50 text-[10px] text-muted-foreground leading-relaxed">
+              <p className="font-bold text-foreground mb-1 uppercase tracking-widest">// PAIR_PROG_ACTIVE</p>
+              <p>Move features from idea to prod with typesafe AI guidance hooks.</p>
+            </div>
+          )}
+
+          <button
+            onClick={() => logout()}
+            title="Logout"
+            className={`flex items-center transition-all duration-200 border border-transparent hover:border-destructive hover:text-destructive hover:bg-destructive/10 font-mono text-xs uppercase tracking-wider ${
+              isCollapsed 
+                ? "h-10 w-10 justify-center mx-auto p-0 text-muted-foreground" 
+                : "px-3 py-2.5 gap-3 w-full text-left"
+            }`}
+          >
+            <LogOut className="h-4 w-4 shrink-0" />
+            {!isCollapsed && <span>Logout</span>}
+          </button>
         </div>
       </aside>
 
       {/* Main Content */}
       <main className="flex-1 p-8 lg:p-12 overflow-y-auto border-l border-border/40">
-        <Link href="/" className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground transition-all mb-8 font-bold border border-border hover:border-foreground px-3 py-1.5 bg-card">
+        <Link href="/dashboard" className="inline-flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground hover:text-foreground transition-all mb-8 font-bold border border-border hover:border-foreground px-3 py-1.5 bg-card">
           <ArrowLeft className="h-3.5 w-3.5" />
           <span>Back to Projects</span>
         </Link>
