@@ -291,7 +291,8 @@ export default function FeaturePipeline() {
       case "prd_generation": return 35;
       case "tasks_breakdown": return 50;
       case "plan_approved": return 65;
-      case "pr_review": return 75;
+      case "pr_review":
+      case "fix_needed": return 75;
       case "pr_approved": return 90;
       case "shipped": return 100;
       default: return 0;
@@ -303,6 +304,9 @@ export default function FeaturePipeline() {
     let currentStatus = feature.status;
     if (currentStatus === "plan_approved") {
       currentStatus = "tasks_breakdown";
+    }
+    if (currentStatus === "fix_needed") {
+      currentStatus = "pr_review";
     }
     const currentIdx = statusOrder.indexOf(currentStatus);
     const stepIdx = statusOrder.indexOf(stepName);
@@ -329,6 +333,9 @@ export default function FeaturePipeline() {
     let currentStatus = feature.status;
     if (currentStatus === "plan_approved") {
       currentStatus = "tasks_breakdown";
+    }
+    if (currentStatus === "fix_needed") {
+      currentStatus = "pr_review";
     }
     const currentIdx = statusOrder.indexOf(currentStatus);
     const stepIdx = statusOrder.indexOf(stepName);
@@ -930,7 +937,7 @@ export default function FeaturePipeline() {
           )}
 
           {/* Phase 5: Code Diff & AI PR Review */}
-          {feature.status === "pr_review" && pullRequest && (
+          {(feature.status === "pr_review" || feature.status === "fix_needed") && pullRequest && (
             <div className="space-y-6 max-w-5xl mx-auto font-mono text-xs">
               <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4 border-b border-border pb-6">
                 <div>
