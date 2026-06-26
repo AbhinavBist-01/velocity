@@ -940,6 +940,141 @@ We are excited to announce the release of **${feature.title}**!
 
     return { feature: updatedFeature, releaseNotes };
   }
+
+  public async runGithubPrReview(repoFullName: string, prNumber: number, token: string) {
+    // 1. Fetch PR details to get title/description for retrieval context
+    const prRes = await fetch(`https://api.github.com/repos/${repoFullName}/pulls/${prNumber}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github.v3+json",
+        "User-Agent": "Velocity-App",
+      },
+    });
+    if (!prRes.ok) throw new Error(`Failed to fetch PR details from GitHub: ${await prRes.text()}`);
+    const prDetails = await prRes.json();
+
+    // 2. Fetch unified diff
+    const diffRes = await fetch(`https://api.github.com/repos/${repoFullName}/pulls/${prNumber}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github.v3.diff",
+        "User-Agent": "Velocity-App",
+      },
+    });
+    if (!diffRes.ok) throw new Error(`Failed to fetch PR diff: ${await diffRes.text()}`);
+    const diffText = await diffRes.text();
+
+    // Parse diff into file structures for chunking
+    const fileDiffs = diffText.split("diff --git ").filter(Boolean);
+    const files = fileDiffs.map(fd => {
+      const lines = fd.split("\n");
+      const firstLine = lines[0] || "";
+      const match = firstLine.match(/b\/(.+)$/);
+      let filepath = "unknown_file";
+      if (match && match[1]) {
+        filepath = match[1].split(" ")[0] || "unknown_file";
+      }
+      return {
+        filepath,
+        diff: "diff --git " + fd,
+        content: "diff --git " + fd,
+      };
+    });
+
+    // 3. Perform RAG
+    const chunks = chunkPrFiles(prNumber, files);
+    const namespace = buildPrNamespace(repoFullName, prNumber);
+
+    let contextSnippets: string[] = [];
+    if (chunks.length > 0) {
+      try {
+        await saveChunksToPinecone(namespace, chunks);
+        contextSnippets = await searchPrContext(namespace, prDetails.title + " " + (prDetails.body || ""));
+      } catch (err) {
+        console.error("Vector DB RAG indexing/search failed, falling back to direct diffs", err);
+      }
+    }
+
+    const retrievedContext = contextSnippets.length > 0
+      ? contextSnippets.join("\n\n---\n\n")
+      : files.map(file => `File: ${file.filepath}\nContent:\n${file.content}`).join("\n\n");
+
+    const prompt = `You are a Senior Security Auditor and AI Code Reviewer.
+Analyze the following pull request code changes (retrieved via RAG):
+
+Pull Request Title: ${prDetails.title}
+Pull Request Description: ${prDetails.body || "No description provided."}
+
+Pull Request Code Changes / Context:
+${retrievedContext}
+
+Identify any security issues, missing constraints, or functional violations.
+Highlight the exact line number where the issue occurs in each file.
+
+Respond ONLY with a JSON object in this exact format:
+{
+  "status": "changes_requested" | "passed",
+  "summary": "Detailed summary of review findings.",
+  "comments": [
+    {
+      "filepath": "filepath of the file",
+      "line": 10,
+      "type": "error" | "warning",
+      "text": "Detailed description of the issue."
+    }
+  ]
+}`;
+
+    const resultText = await generateGeminiContent(prompt, true);
+    const parsed = JSON.parse(resultText);
+
+    const status = parsed.status || "changes_requested";
+    const summary = parsed.summary || "AI review completed.";
+    const comments = parsed.comments || [];
+
+    // 4. Submit review to GitHub
+    const githubComments = comments.map((c: any) => ({
+      path: c.filepath,
+      line: Number(c.line) || 1,
+      body: c.text,
+    }));
+
+    const reviewRes = await fetch(`https://api.github.com/repos/${repoFullName}/pulls/${prNumber}/reviews`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        Accept: "application/vnd.github.v3+json",
+        "Content-Type": "application/json",
+        "User-Agent": "Velocity-App",
+      },
+      body: JSON.stringify({
+        body: summary,
+        event: status === "passed" ? "APPROVE" : "REQUEST_CHANGES",
+        comments: githubComments.length > 0 ? githubComments : undefined,
+      }),
+    });
+
+    if (!reviewRes.ok) {
+      const errTxt = await reviewRes.text();
+      console.warn("Failed to submit line-level review, falling back to summary comment:", errTxt);
+      
+      // Fallback: Post simple comment if line-level fails (due to diff range mismatch)
+      await fetch(`https://api.github.com/repos/${repoFullName}/issues/${prNumber}/comments`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/vnd.github.v3+json",
+          "Content-Type": "application/json",
+          "User-Agent": "Velocity-App",
+        },
+        body: JSON.stringify({
+          body: `### AI Review Audit Summary\n\n**Status:** ${status.toUpperCase()}\n\n${summary}\n\n**Detailed Findings:**\n${comments.map((c: any) => `- **${c.filepath}:${c.line}**: ${c.text}`).join("\n")}`,
+        }),
+      });
+    }
+
+    return { status, summary, comments };
+  }
 }
 
 export const velocityService = new VelocityService();

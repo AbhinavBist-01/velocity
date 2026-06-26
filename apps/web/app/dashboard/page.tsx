@@ -83,6 +83,63 @@ export default function Dashboard() {
       fetchGithubRepos();
     }
   }, [session]);
+
+  const [activePulls, setActivePulls] = useState<{ id: number; number: number; title: string; state: string; branch: string; sha: string; user: string; url: string }[]>([]);
+  const [isLoadingPulls, setIsLoadingPulls] = useState(false);
+  const [selectedPrNumber, setSelectedPrNumber] = useState<number | null>(null);
+  const [isGeneratingReview, setIsGeneratingReview] = useState(false);
+  const [prFiles, setPrFiles] = useState<{ filepath: string; status: string; additions?: number; deletions?: number }[]>([]);
+  const [isLoadingFiles, setIsLoadingFiles] = useState(false);
+
+  React.useEffect(() => {
+    if (session && selectedRepo && activeTab === "github") {
+      setIsLoadingPulls(true);
+      fetch(`/api/github/pulls?repo=${encodeURIComponent(selectedRepo)}`)
+        .then((res) => {
+          if (!res.ok) throw new Error("Failed to load pull requests");
+          return res.json();
+        })
+        .then((data) => {
+          setActivePulls(data);
+          if (data.length > 0) {
+            setSelectedPrNumber(data[0].number);
+          } else {
+            setSelectedPrNumber(null);
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          setActivePulls([]);
+          setSelectedPrNumber(null);
+        })
+        .finally(() => {
+          setIsLoadingPulls(false);
+        });
+    }
+  }, [session, selectedRepo, activeTab]);
+
+  React.useEffect(() => {
+    if (session && selectedRepo && selectedPrNumber && activeTab === "github") {
+      setIsLoadingFiles(true);
+      fetch(`/api/github/pulls/files?repo=${encodeURIComponent(selectedRepo)}&number=${selectedPrNumber}`)
+        .then((res) => {
+          if (!res.ok) throw new Error("Failed to load PR files");
+          return res.json();
+        })
+        .then((data) => {
+          setPrFiles(data);
+        })
+        .catch((err) => {
+          console.error(err);
+          setPrFiles([]);
+        })
+        .finally(() => {
+          setIsLoadingFiles(false);
+        });
+    } else {
+      setPrFiles([]);
+    }
+  }, [session, selectedRepo, selectedPrNumber, activeTab]);
   
   // Issue & PR Forms State
   const [issueTitle, setIssueTitle] = useState("");
@@ -828,31 +885,102 @@ export default function Dashboard() {
                               <span className="text-[10px] font-mono text-muted-foreground">listPullRequests() & getPullRequestFiles()</span>
                             </div>
 
-                            <div className="space-y-2.5">
-                              <div className="flex items-center justify-between p-2 border border-border/80 bg-background text-[11px]">
-                                <div className="flex items-center gap-2 font-bold">
-                                  <span className="text-emerald-500">PR #45</span>
-                                  <span>feat: add a home page layout</span>
-                                </div>
-                                <span className="text-[9px] border border-emerald-500/20 text-emerald-500 bg-emerald-500/5 px-2 py-0.5 font-bold uppercase">OPEN</span>
+                            <div className="space-y-4">
+                              <div className="space-y-1.5">
+                                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+                                  Select Open Pull Request {isLoadingPulls && "(Loading...)"}
+                                </label>
+                                <select
+                                  value={selectedPrNumber || ""}
+                                  onChange={(e) => setSelectedPrNumber(Number(e.target.value) || null)}
+                                  className="w-full border border-border rounded-none bg-background text-xs font-mono p-3 focus-visible:outline-none focus-visible:border-foreground"
+                                  disabled={isLoadingPulls || activePulls.length === 0}
+                                >
+                                  {activePulls.length > 0 ? (
+                                    activePulls.map((pr) => (
+                                      <option key={pr.id} value={pr.number}>
+                                        PR #{pr.number}: {pr.title} (by @{pr.user})
+                                      </option>
+                                    ))
+                                  ) : (
+                                    <option value="">No open pull requests found</option>
+                                  )}
+                                </select>
                               </div>
-                              <div className="pl-4 text-[10px] space-y-1 text-muted-foreground">
-                                <p className="font-bold">// Changed Files in PR #45 (getPullRequestFiles()):</p>
-                                <p className="flex items-center gap-1.5">
-                                  <FileCode className="h-3.5 w-3.5 text-foreground shrink-0" />
-                                  <span>apps/web/app/page.tsx (status: modified)</span>
-                                </p>
-                                <p className="flex items-center gap-1.5">
-                                  <FileCode className="h-3.5 w-3.5 text-foreground shrink-0" />
-                                  <span>packages/database/schema.ts (status: modified)</span>
-                                </p>
+
+                              <div className="pl-2 text-[10px] space-y-1.5 text-muted-foreground border-l border-border/80">
+                                <p className="font-bold uppercase tracking-wider text-foreground">// Changed Files (getPullRequestFiles()):</p>
+                                {isLoadingFiles ? (
+                                  <p className="animate-pulse">Loading modified files list...</p>
+                                ) : prFiles.length > 0 ? (
+                                  prFiles.map((file, i) => (
+                                    <p key={i} className="flex items-center gap-1.5 truncate">
+                                      <FileCode className="h-3.5 w-3.5 text-foreground shrink-0" />
+                                      <span className="truncate">{file.filepath}</span>
+                                      <span className="text-[8px] px-1 bg-muted uppercase shrink-0 font-sans">{file.status}</span>
+                                      {file.additions !== undefined && <span className="text-emerald-500 shrink-0 font-bold">+{file.additions}</span>}
+                                      {file.deletions !== undefined && <span className="text-red-500 shrink-0 font-bold">-{file.deletions}</span>}
+                                    </p>
+                                  ))
+                                ) : (
+                                  <p className="italic">No changed files detected for this pull request.</p>
+                                )}
                               </div>
+                            </div>
+                          </div>
+
+                          {/* AI RAG Trigger Card */}
+                          <div className="border border-border p-4 bg-muted/5 space-y-3">
+                            <h3 className="text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b border-border pb-2 text-foreground">
+                              <span>Generate AI Review with RAG (Pinecone & Gemini)</span>
+                            </h3>
+                            <p className="text-[10px] text-muted-foreground leading-relaxed font-sans">
+                              Triggering this audit will fetch the PR's unified diff from GitHub, chunk and vector-index it inside Pinecone, perform retrieval query matches, analyze the code with Gemini, and submit inline comments back to GitHub.
+                            </p>
+                            <div className="pt-1">
+                              <Button
+                                onClick={async () => {
+                                  if (!selectedPrNumber) {
+                                    toast.warning("Please select a pull request first");
+                                    return;
+                                  }
+                                  setIsGeneratingReview(true);
+                                  try {
+                                    const res = await fetch("/api/github/pulls/review", {
+                                      method: "POST",
+                                      headers: {
+                                        "Content-Type": "application/json",
+                                      },
+                                      body: JSON.stringify({
+                                        repoFullName: selectedRepo,
+                                        prNumber: selectedPrNumber,
+                                      }),
+                                    });
+
+                                    if (!res.ok) {
+                                      const errData = await res.json();
+                                      throw new Error(errData.error || "Failed to generate AI review");
+                                    }
+
+                                    const review = await res.json();
+                                    toast.success(`[AI Auditor] Review generated! Status: ${review.status.toUpperCase()}. Comments submitted to GitHub.`);
+                                  } catch (err: any) {
+                                    toast.error(`AI Audit failed: ${err.message}`);
+                                  } finally {
+                                    setIsGeneratingReview(false);
+                                  }
+                                }}
+                                disabled={isGeneratingReview || !selectedPrNumber}
+                                className="rounded-none w-full text-[10px] uppercase font-mono tracking-wider bg-foreground text-background hover:bg-neutral-800 py-5"
+                              >
+                                {isGeneratingReview ? "Running RAG & AI Audit..." : "Run AI RAG Audit & Submit"}
+                              </Button>
                             </div>
                           </div>
 
                           <div className="border border-border p-4 bg-muted/5 space-y-4">
                             <h3 className="text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b border-border pb-2 text-foreground">
-                              <span>createReview() & approveReview()</span>
+                              <span>Manual Review & Sign-Off override</span>
                             </h3>
                             <div className="space-y-3">
                               <Textarea 
@@ -869,20 +997,22 @@ export default function Dashboard() {
                                       toast.error("Please add a review comment first");
                                       return;
                                     }
-                                    toast.success(`[GitHub] createReview() executed. Changes requested on PR #45: "${reviewComment}"`);
+                                    toast.success(`[GitHub] Manual createReview() executed on PR #${selectedPrNumber || 45}: "${reviewComment}"`);
                                     setReviewComment("");
                                   }}
+                                  disabled={!selectedPrNumber}
                                   className="rounded-none text-[10px] uppercase font-mono tracking-wider bg-red-600/10 text-red-500 hover:bg-red-600/20 border border-red-500/20"
                                 >
                                   Request Changes
                                 </Button>
                                 <Button 
                                   onClick={() => {
-                                    toast.success("[GitHub] approveReview() executed. PR #45 approved and ready for merge.");
+                                    toast.success(`[GitHub] Manual approveReview() executed. PR #${selectedPrNumber || 45} approved.`);
                                   }}
+                                  disabled={!selectedPrNumber}
                                   className="rounded-none text-[10px] uppercase font-mono tracking-wider bg-emerald-600 text-white hover:bg-emerald-700"
                                 >
-                                  Approve PR #45
+                                  Approve PR #{selectedPrNumber || 45}
                                 </Button>
                               </div>
                             </div>
