@@ -363,10 +363,123 @@ export default function FeaturePipeline() {
     return "border-transparent text-muted-foreground/60";
   };
 
+  const renderBoldText = (txt: string) => {
+    const parts = txt.split(/\*\*([^*]+)\*\*/g);
+    return parts.map((part, i) => i % 2 === 1 ? <strong key={i} className="font-bold text-foreground">{part}</strong> : part);
+  };
+
   const renderPrdBody = (text: string) => {
+    // 1. Parse markdown sections
+    const lines = text.split("\n");
+    const sections: { title: string; content: string[]; isTechnical: boolean }[] = [];
+    let currentSec: { title: string; content: string[]; isTechnical: boolean } | null = null;
+    let mainTitle = "";
+
+    const techKeywords = ["prisma", "nodemailer", "database", "sql", "api endpoint", "schema", "backend", "listener", "middleware", "rate-limit"];
+
+    for (const line of lines) {
+      if (line.startsWith("# ")) {
+        mainTitle = line.replace("# ", "").trim();
+      } else if (line.startsWith("## ")) {
+        if (currentSec) {
+          sections.push(currentSec);
+        }
+        const title = line.replace("## ", "").trim().replace(/^\d+\.\s*/, "");
+        const isTechnical = techKeywords.some(kw => title.toLowerCase().includes(kw)) || title.toLowerCase().includes("technical");
+        currentSec = { title, content: [], isTechnical };
+      } else if (currentSec) {
+        currentSec.content.push(line);
+      }
+    }
+    if (currentSec) {
+      sections.push(currentSec);
+    }
+
+    if (sections.length === 0) {
+      return (
+        <div className="prose prose-invert max-w-none text-xs leading-relaxed space-y-4 font-mono whitespace-pre-wrap select-text text-foreground">
+          {text}
+        </div>
+      );
+    }
+
+    const getCleanPoints = (contentLines: string[]) => {
+      return contentLines
+        .map(l => l.trim())
+        .filter(l => l.length > 0)
+        .map(l => l.replace(/^[\*\-\+]\s*/, ""));
+    };
+
     return (
-      <div className="prose prose-invert max-w-none text-xs leading-relaxed space-y-4 font-mono whitespace-pre-wrap select-text text-foreground">
-        {text}
+      <div className="space-y-8 font-sans text-sm text-foreground/90 select-text">
+        {mainTitle && (
+          <div className="border-b border-border pb-4 mb-6">
+            <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">// Product Specs Document</span>
+            <h3 className="text-xl font-bold uppercase tracking-tight text-foreground mt-1">{mainTitle}</h3>
+          </div>
+        )}
+
+        {/* Highlight Section: Problem Statement */}
+        {sections.filter(s => s.title.toLowerCase().includes("problem") || s.title.toLowerCase().includes("statement") || s.title.toLowerCase().includes("intake")).map(sec => (
+          <div key={sec.title} className="p-4 border-l-2 border-foreground bg-foreground/[0.02]">
+            <h4 className="text-xs uppercase font-mono font-bold tracking-wider text-muted-foreground mb-2">// {sec.title}</h4>
+            <p className="leading-relaxed text-foreground/80 font-sans">{renderBoldText(sec.content.join(" ").trim().replace(/^[\*\-\+]\s*/, ""))}</p>
+          </div>
+        ))}
+
+        {/* Business/Non-Tech Sections in clean columns */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {sections
+            .filter(s => !s.title.toLowerCase().includes("problem") && !s.title.toLowerCase().includes("statement") && !s.title.toLowerCase().includes("intake") && !s.isTechnical)
+            .map(sec => {
+              const points = getCleanPoints(sec.content);
+              return (
+                <div key={sec.title} className="p-5 border border-border bg-card/40 space-y-4 hover:border-foreground/20 transition-all duration-300">
+                  <div className="flex items-center gap-2 border-b border-border/50 pb-2">
+                    <FileText className="h-4 w-4 text-foreground/75" />
+                    <h4 className="font-bold text-xs uppercase tracking-wider">{sec.title}</h4>
+                  </div>
+                  <ul className="space-y-2.5">
+                    {points.map((p, idx) => (
+                      <li key={idx} className="flex items-start gap-2.5 leading-relaxed text-xs text-foreground/80">
+                        <Check className="h-3.5 w-3.5 text-foreground shrink-0 mt-0.5" />
+                        <span>{renderBoldText(p)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+        </div>
+
+        {/* Technical & Implementation specs hidden in a beautifully-styled summary detail */}
+        {sections.some(s => s.isTechnical) && (
+          <div className="border border-border p-4 bg-muted/10">
+            <details className="group">
+              <summary className="flex items-center justify-between cursor-pointer font-mono text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground">
+                <div className="flex items-center gap-2">
+                  <Terminal className="h-4 w-4" />
+                  <span>Technical System Specifications & Dependencies</span>
+                </div>
+                <span className="transition-transform group-open:rotate-90">
+                  <ChevronRight className="h-4 w-4" />
+                </span>
+              </summary>
+              <div className="mt-4 pt-4 border-t border-border/60 space-y-4">
+                {sections
+                  .filter(s => s.isTechnical)
+                  .map(sec => (
+                    <div key={sec.title} className="space-y-2">
+                      <h5 className="font-bold text-xs uppercase font-mono tracking-wide text-foreground">{sec.title}</h5>
+                      <div className="font-mono text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap pl-3 border-l border-border/60">
+                        {sec.content.join("\n").trim()}
+                      </div>
+                    </div>
+                  ))}
+              </div>
+            </details>
+          </div>
+        )}
       </div>
     );
   };
