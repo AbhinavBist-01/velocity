@@ -242,3 +242,30 @@ input:focus, textarea:focus, select:focus {
     transparent 70%
   );
 }
+
+/* ─── Hover Blur Group animations ─────────────────────────────────────── */
+.hover-blur-group {
+  isolation: isolate;
+}
+.hover-blur-item {
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+              filter 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+              opacity 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+              border-color 0.3s cubic-bezier(0.2, 0.8, 0.2, 1),
+              box-shadow 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.hover-blur-group:hover .hover-blur-item {
+  filter: blur(4px) saturate(80%);
+  opacity: 0.45;
+  transform: scale(0.97);
+}
+.hover-blur-group .hover-blur-item:hover {
+  filter: blur(0px) saturate(100%);
+  opacity: 1;
+  transform: scale(1.04);
+  z-index: 10;
+  border-color: var(--foreground) !important;
+  box-shadow: 
+    0 15px 30px color-mix(in srgb, var(--foreground) 10%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--foreground) 15%, transparent);
+}

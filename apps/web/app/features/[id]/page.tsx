@@ -411,7 +411,7 @@ export default function FeaturePipeline() {
     };
 
     return (
-      <div className="space-y-8 font-sans text-sm text-foreground/90 select-text">
+      <div className="space-y-8 font-sans text-sm text-foreground/90 select-text hover-blur-group">
         {mainTitle && (
           <div className="border-b border-border pb-4 mb-6">
             <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">// Product Specs Document</span>
@@ -421,7 +421,7 @@ export default function FeaturePipeline() {
 
         {/* Highlight Section: Problem Statement */}
         {sections.filter(s => s.title.toLowerCase().includes("problem") || s.title.toLowerCase().includes("statement") || s.title.toLowerCase().includes("intake")).map(sec => (
-          <div key={sec.title} className="p-4 border-l-2 border-foreground bg-foreground/[0.02]">
+          <div key={sec.title} className="p-4 border-l-2 border-foreground bg-foreground/[0.02] hover-blur-item transition-all duration-300">
             <h4 className="text-xs uppercase font-mono font-bold tracking-wider text-muted-foreground mb-2">// {sec.title}</h4>
             <p className="leading-relaxed text-foreground/80 font-sans">{renderBoldText(sec.content.join(" ").trim().replace(/^[\*\-\+]\s*/, ""))}</p>
           </div>
@@ -434,7 +434,7 @@ export default function FeaturePipeline() {
             .map(sec => {
               const points = getCleanPoints(sec.content);
               return (
-                <div key={sec.title} className="p-5 border border-border bg-card/40 space-y-4 hover:border-foreground/20 transition-all duration-300">
+                <div key={sec.title} className="p-5 border border-border bg-card/40 space-y-4 hover-blur-item transition-all duration-300">
                   <div className="flex items-center gap-2 border-b border-border/50 pb-2">
                     <FileText className="h-4 w-4 text-foreground/75" />
                     <h4 className="font-bold text-xs uppercase tracking-wider">{sec.title}</h4>
@@ -454,7 +454,7 @@ export default function FeaturePipeline() {
 
         {/* Technical & Implementation specs hidden in a beautifully-styled summary detail */}
         {sections.some(s => s.isTechnical) && (
-          <div className="border border-border p-4 bg-muted/10">
+          <div className="border border-border p-4 bg-muted/10 hover-blur-item transition-all duration-300">
             <details className="group">
               <summary className="flex items-center justify-between cursor-pointer font-mono text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground">
                 <div className="flex items-center gap-2">
@@ -1163,7 +1163,7 @@ export default function FeaturePipeline() {
 
                     <div className="space-y-4">
                       {/* 1. PRD */}
-                      <div className="border border-border p-4 bg-background/50 space-y-3">
+                      <div className="border border-border p-4 bg-background/50 space-y-3 transition-all duration-300">
                         <label className="flex items-start gap-3 cursor-pointer">
                           <input
                             type="checkbox"
@@ -1185,7 +1185,7 @@ export default function FeaturePipeline() {
                       </div>
 
                       {/* 2. Tasks */}
-                      <div className="border border-border p-4 bg-background/50 space-y-3">
+                      <div className="border border-border p-4 bg-background/50 space-y-3 transition-all duration-300">
                         <label className="flex items-start gap-3 cursor-pointer">
                           <input
                             type="checkbox"
@@ -1218,7 +1218,7 @@ export default function FeaturePipeline() {
                       </div>
 
                       {/* 3. Pull Request */}
-                      <div className="border border-border p-4 bg-background/50 space-y-3">
+                      <div className="border border-border p-4 bg-background/50 space-y-3 transition-all duration-300">
                         <label className="flex items-start gap-3 cursor-pointer">
                           <input
                             type="checkbox"
@@ -1247,7 +1247,7 @@ export default function FeaturePipeline() {
                       </div>
 
                       {/* 4. AI Review History */}
-                      <div className="border border-border p-4 bg-background/50 space-y-3">
+                      <div className="border border-border p-4 bg-background/50 space-y-3 transition-all duration-300">
                         <label className="flex items-start gap-3 cursor-pointer">
                           <input
                             type="checkbox"
@@ -1273,7 +1273,7 @@ export default function FeaturePipeline() {
                       </div>
 
                       {/* 5. Outstanding Issues */}
-                      <div className="border border-border p-4 bg-background/50 space-y-3">
+                      <div className="border border-border p-4 bg-background/50 space-y-3 transition-all duration-300">
                         <label className="flex items-start gap-3 cursor-pointer">
                           <input
                             type="checkbox"
