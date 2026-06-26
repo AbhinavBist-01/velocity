@@ -43,7 +43,7 @@ export async function POST(req: Request) {
           title: pull_request.title,
           branchName: pull_request.head.ref,
           installationId: event.installation?.id,
-        }).catch((err) => {
+        }).catch((err: any) => {
           console.error("Error in background AI PR review execution:", err);
         });
       }

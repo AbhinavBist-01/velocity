@@ -12,6 +12,8 @@ import {
   SelectAiReview
 } from "@repo/database/schema";
 import { generateGeminiContent } from "./clients/gemini";
+import { chunkPrFiles } from "./ai/chunk-code";
+import { saveChunksToPinecone, searchPrContext, buildPrNamespace } from "./ai/vector";
 
 export class VelocityService {
   // 1. Projects
@@ -586,16 +588,39 @@ export const featureRouter = router({
     const [feature] = await db.select().from(featuresTable).where(eq(featuresTable.id, featureId)).limit(1);
     if (!feature) throw new Error("Feature not found");
 
-    const diffsText = (pullRequest.diffData as any[]).map(file => `File: ${file.filepath}\nContent:\n${file.content}`).join("\n\n");
+    // 1. Perform RAG pipeline: Chunking and Pinecone indexing
+    const files = (pullRequest.diffData as any[]).map(file => ({
+      filepath: file.filepath,
+      diff: file.diff || "",
+      content: file.content || ""
+    }));
+
+    const chunks = chunkPrFiles(1, files);
+    const namespace = buildPrNamespace(feature.projectId, 1);
+
+    let contextSnippets: string[] = [];
+    if (chunks.length > 0) {
+      try {
+        await saveChunksToPinecone(namespace, chunks);
+        // Retrieval: Query the Pinecone namespace for relevant snippets using PR/Feature context
+        contextSnippets = await searchPrContext(namespace, feature.title);
+      } catch (err) {
+        console.error("Vector DB RAG indexing/search failed, falling back to direct diffs", err);
+      }
+    }
+
+    const retrievedContext = contextSnippets.length > 0
+      ? contextSnippets.join("\n\n---\n\n")
+      : files.map(file => `File: ${file.filepath}\nContent:\n${file.content}`).join("\n\n");
 
     const prompt = `You are a Senior Security Auditor and AI Code Reviewer.
-Analyze the following Product Requirements Document (PRD) and the pull request code changes:
+Analyze the following Product Requirements Document (PRD) and the pull request code changes (retrieved via RAG):
 
 PRD:
 ${feature.prdContent}
 
-Pull Request Code Changes:
-${diffsText}
+Pull Request Code Changes / Context:
+${retrievedContext}
 
 Review the code against the PRD requirements. Identify any security issues, missing constraints, or functional violations (e.g. missing auth middleware, missing input validations, missing rate limits).
 Highlight the exact line number where the issue occurs in each file.
@@ -680,6 +705,31 @@ Respond ONLY with a JSON object in this exact format:
     }
 
     return review;
+  }
+
+  // Webhook-triggered PR Review Pipeline
+  public async triggerWebhookAiReview(input: {
+    repoFullName: string;
+    prNumber: number;
+    title: string;
+    branchName: string;
+    installationId?: number;
+  }): Promise<void> {
+    console.log("Triggering Webhook AI Review for repository:", input.repoFullName, "PR:", input.prNumber);
+
+    // Look up feature matching the branch name or get latest fallback
+    let [feature] = await db.select().from(featuresTable).where(eq(featuresTable.branchName, input.branchName)).limit(1);
+    if (!feature) {
+      const latestFeatures = await db.select().from(featuresTable).orderBy(desc(featuresTable.createdAt)).limit(1);
+      feature = latestFeatures[0];
+    }
+    if (!feature) {
+      console.warn("No active feature found to associate webhook code review with.");
+      return;
+    }
+
+    // Run review flow
+    await this.runAiReview(feature.id);
   }
 
   public async submitFixes(featureId: string): Promise<{ pullRequest: SelectPullRequest; aiReview: SelectAiReview }> {
