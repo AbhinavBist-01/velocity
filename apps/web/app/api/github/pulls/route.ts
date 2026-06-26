@@ -1,7 +1,6 @@
 import { auth } from "@repo/database/auth";
-import { db } from "@repo/database";
+import { db, eq, and } from "@repo/database";
 import { account } from "@repo/database/schema";
-import { eq, and } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
