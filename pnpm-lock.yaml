@@ -382,6 +382,9 @@ importers:
 
   packages/services:
     dependencies:
+      '@pinecone-database/pinecone':
+        specifier: ^8.0.0
+        version: 8.0.0
       '@repo/database':
         specifier: workspace:*
         version: link:../database
@@ -1373,6 +1376,10 @@ packages:
   '@opentelemetry/semantic-conventions@1.41.1':
     resolution: {integrity: sha512-/UhIkaZgPutTFmQ7RnIJGgDXZmtEJ7Dvi86xNTFWcnRxVRNk/aotsqDJYeEvDP+FSMB2SdW+pQzNMcWP0rwuNA==}
     engines: {node: '>=14'}
+
+  '@pinecone-database/pinecone@8.0.0':
+    resolution: {integrity: sha512-dItFqLdis2Pd5lC67aKn8HhvXajzlOz4+0RyK1CRcZMdSwG8YxUCBtH4yXPC8/6uLxfr2dvMWnRFuKgtPwwajQ==}
+    engines: {node: '>=20.0.0'}
 
   '@pkgjs/parseargs@0.11.0':
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
@@ -5482,6 +5489,8 @@ snapshots:
       '@octokit/openapi-types': 27.0.0
 
   '@opentelemetry/semantic-conventions@1.41.1': {}
+
+  '@pinecone-database/pinecone@8.0.0': {}
 
   '@pkgjs/parseargs@0.11.0':
     optional: true

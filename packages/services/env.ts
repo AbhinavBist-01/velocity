@@ -11,6 +11,7 @@ const envSchema = z.object({
   GOOGLE_OAUTH_CLIENT_SECRET: optionalEnvString,
   GOOGLE_OAUTH_REDIRECT_URI: optionalEnvString,
   GEMINI_API_KEY: optionalEnvString,
+  PINECONE_API_KEY: optionalEnvString,
 });
 
 function createEnv(env: NodeJS.ProcessEnv) {
