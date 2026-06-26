@@ -4,6 +4,8 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --font-sans: var(--font-font-geist-sans), var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-font-geist-mono), var(--font-geist-mono), monospace;
   --radius-sm: 0px;
   --radius-md: 2px;
   --radius-lg: 4px;
@@ -119,7 +121,10 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground transition-colors duration-300 antialiased;
+    @apply bg-background text-foreground transition-colors duration-300 antialiased font-sans tracking-tight;
+  }
+  h1, h2, h3, h4, h5, h6 {
+    @apply tracking-tighter text-balance font-black;
   }
 }
 
