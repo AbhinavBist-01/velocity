@@ -1,4 +1,4 @@
 import { auth } from "@repo/database/auth";
-import { toNextResponse } from "better-auth/next-js";
 
-export const { GET, POST } = toNextResponse(auth);
+export const GET = auth.handler;
+export const POST = auth.handler;

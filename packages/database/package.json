@@ -3,8 +3,18 @@
   "version": "1.0.0",
   "main": "./index.ts",
   "exports": {
-    ".": "./index.ts",
-    "./auth": "./auth.ts"
+    ".": {
+      "types": "./index.ts",
+      "default": "./index.ts"
+    },
+    "./auth": {
+      "types": "./auth.ts",
+      "default": "./auth.ts"
+    },
+    "./schema": {
+      "types": "./schema.ts",
+      "default": "./schema.ts"
+    }
   },
   "scripts": {
     "db:migrate": "dotenv -- drizzle-kit migrate",
