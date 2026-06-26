@@ -232,8 +232,8 @@ export const velocityRouter = router({
     .meta({ openapi: { method: "POST", path: "/velocity/features/initialize-branch", tags: TAGS } })
     .input(z.object({ featureId: z.string() }))
     .output(PullRequestSchema)
-    .mutation(async ({ input }) => {
-      return velocityService.initializeBranch(input.featureId);
+    .mutation(async ({ input, ctx }) => {
+      return velocityService.initializeBranch(input.featureId, ctx.user.id);
     }),
 
   runAiReview: protectedProcedure
@@ -261,6 +261,14 @@ export const velocityRouter = router({
     .output(FeatureSchema)
     .mutation(async ({ input }) => {
       return velocityService.approveRelease(input.featureId);
+    }),
+
+  rejectRelease: protectedProcedure
+    .meta({ openapi: { method: "POST", path: "/velocity/features/reject-release", tags: TAGS } })
+    .input(z.object({ featureId: z.string() }))
+    .output(FeatureSchema)
+    .mutation(async ({ input }) => {
+      return velocityService.rejectRelease(input.featureId);
     }),
 
   shipFeature: protectedProcedure

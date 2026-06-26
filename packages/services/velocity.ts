@@ -11,7 +11,9 @@ import {
   SelectPullRequest,
   SelectAiReview
 } from "@repo/database/schema";
+import { account } from "@repo/database/schema";
 import { generateGeminiContent } from "./clients/gemini";
+import { createGithubBranchAndPR } from "./clients/github-git";
 import { chunkPrFiles } from "./ai/chunk-code";
 import { saveChunksToPinecone, searchPrContext, buildPrNamespace } from "./ai/vector";
 
@@ -460,22 +462,15 @@ Respond ONLY with a JSON array in this exact format:
   }
 
   // 4. Git Branch & Pull Request
-  public async initializeBranch(featureId: string): Promise<SelectPullRequest> {
+  public async initializeBranch(featureId: string, userId?: string): Promise<SelectPullRequest> {
     const [feature] = await db.select().from(featuresTable).where(eq(featuresTable.id, featureId)).limit(1);
     if (!feature) throw new Error("Feature not found");
 
-    const branchName = `feature/${feature.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
-    const prNumber = Math.floor(Math.random() * 1000) + 100;
+    const [project] = await db.select().from(projectsTable).where(eq(projectsTable.id, feature.projectId)).limit(1);
+    if (!project) throw new Error("Project not found");
 
-    // Set branch in feature
-    await db
-      .update(featuresTable)
-      .set({
-        branchName,
-        prNumber,
-        status: "pr_review",
-      })
-      .where(eq(featuresTable.id, featureId));
+    const branchName = `feature/${feature.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`;
+    let prNumber = Math.floor(Math.random() * 1000) + 100;
 
     const prompt = `You are a Lead Software Architect.
 Analyze the following Product Requirements Document (PRD) for a feature:
@@ -561,6 +556,52 @@ export const featureRouter = router({
         }
       ];
     }
+
+    // 2. Query GitHub account for accessToken if userId is provided
+    let githubAccount: any = null;
+    if (userId) {
+      githubAccount = await db
+        .select()
+        .from(account)
+        .where(and(eq(account.userId, userId), eq(account.providerId, "github")))
+        .limit(1)
+        .then(rows => rows[0]);
+    }
+
+    // 3. Create real branch & PR on GitHub if token and repo exist
+    if (githubAccount && githubAccount.accessToken && project.githubRepo && project.githubRepo.includes("/")) {
+      try {
+        const commitFiles = diffData.map((f: any) => ({
+          filepath: f.filepath,
+          content: f.content,
+        }));
+        
+        const prInfo = await createGithubBranchAndPR({
+          repoFullName: project.githubRepo,
+          branchName,
+          token: githubAccount.accessToken,
+          files: commitFiles,
+          prTitle: `Implement ${feature.title}`,
+          prBody: `AI-generated Pull Request matching PRD specifications.\n\n### Requirement Specs:\n${feature.description}`,
+        });
+
+        if (prInfo && prInfo.number) {
+          prNumber = prInfo.number;
+        }
+      } catch (githubErr) {
+        console.error("Failed to create branch/PR on GitHub, falling back to mock reference creation:", githubErr);
+      }
+    }
+
+    // Set branch in feature
+    await db
+      .update(featuresTable)
+      .set({
+        branchName,
+        prNumber,
+        status: "pr_review",
+      })
+      .where(eq(featuresTable.id, featureId));
 
     const [pullRequest] = await db
       .insert(pullRequestsTable)
@@ -886,7 +927,6 @@ export const featureRouter = router({
     return { pullRequest: updatedPR, aiReview: dummyReview };
   }
 
-  // 6. Approval & Ship
   public async approveRelease(featureId: string): Promise<SelectFeature> {
     const [feature] = await db
       .update(featuresTable)
@@ -896,6 +936,18 @@ export const featureRouter = router({
       .where(eq(featuresTable.id, featureId))
       .returning();
     if (!feature) throw new Error("Failed to approve release");
+    return feature;
+  }
+
+  public async rejectRelease(featureId: string): Promise<SelectFeature> {
+    const [feature] = await db
+      .update(featuresTable)
+      .set({
+        status: "fix_needed",
+      })
+      .where(eq(featuresTable.id, featureId))
+      .returning();
+    if (!feature) throw new Error("Failed to reject release");
     return feature;
   }
 

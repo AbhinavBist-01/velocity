@@ -167,6 +167,16 @@ export default function FeaturePipeline() {
     }
   });
 
+  const rejectReleaseMutation = trpc.velocity.rejectRelease.useMutation({
+    onSuccess: () => {
+      utils.velocity.getFeatureDetails.invalidate({ id: featureId });
+      toast.success("Release rejected. Returned to developer queue.");
+    },
+    onError: (err) => {
+      toast.error(`Error: ${err.message}`);
+    }
+  });
+
   const shipFeatureMutation = trpc.velocity.shipFeature.useMutation({
     onSuccess: (res) => {
       utils.velocity.getFeatureDetails.invalidate({ id: featureId });
@@ -198,6 +208,13 @@ export default function FeaturePipeline() {
   const [editTaskTitle, setEditTaskTitle] = useState("");
   const [editTaskDescription, setEditTaskDescription] = useState("");
   const [editTaskPriority, setEditTaskPriority] = useState("medium");
+
+  // Human Review Deck States
+  const [verifiedPrd, setVerifiedPrd] = useState(false);
+  const [verifiedTasks, setVerifiedTasks] = useState(false);
+  const [verifiedPr, setVerifiedPr] = useState(false);
+  const [verifiedAiHistory, setVerifiedAiHistory] = useState(false);
+  const [verifiedIssues, setVerifiedIssues] = useState(false);
 
   const startEditingTask = (t: any) => {
     setEditingTask(t);
@@ -981,14 +998,9 @@ export default function FeaturePipeline() {
                       </Button>
                     </>
                   ) : (
-                    <Button
-                      onClick={() => approveReleaseMutation.mutate({ featureId })}
-                      disabled={approveReleaseMutation.isPending}
-                      className="gap-1.5 rounded-none bg-foreground text-background hover:bg-neutral-800 font-bold py-5 px-6 border border-foreground"
-                    >
-                      <ShieldCheck className="h-4 w-4" />
-                      <span>Approve Release</span>
-                    </Button>
+                    <div className="text-[10px] font-bold border border-foreground/30 bg-card text-foreground px-4 py-3 uppercase tracking-wider">
+                      Awaiting Human Review
+                    </div>
                   )}
                 </div>
               </div>
@@ -1015,6 +1027,211 @@ export default function FeaturePipeline() {
                     {aiReview.summary}
                   </p>
                 </div>
+              )}
+
+              {/* Human Reviewer Verification Deck */}
+              {aiReview && (
+                <Card className="border-2 border-foreground bg-card rounded-none shadow-md overflow-hidden">
+                  <CardHeader className="border-b border-border bg-muted/20">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="h-5 w-5 text-foreground animate-pulse" />
+                      <div>
+                        <CardTitle className="text-sm font-black uppercase tracking-wider">Lead Reviewer Verification Deck</CardTitle>
+                        <CardDescription className="text-[10px] text-muted-foreground font-mono uppercase mt-0.5">
+                          // human_signoff_verification_protocol_v1.0
+                        </CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-6 space-y-6">
+                    <p className="text-xs text-muted-foreground font-sans leading-relaxed">
+                      As the lead human reviewer, you must verify the five dimensions of the delivery checklist below. Checking all items will authorize and unlock the release sign-off controls.
+                    </p>
+
+                    <div className="space-y-4">
+                      {/* 1. PRD */}
+                      <div className="border border-border p-4 bg-background/50 space-y-3">
+                        <label className="flex items-start gap-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={verifiedPrd}
+                            onChange={(e) => setVerifiedPrd(e.target.checked)}
+                            className="mt-0.5 h-4.5 w-4.5 accent-foreground cursor-pointer rounded-none border-border"
+                          />
+                          <div>
+                            <span className="font-bold text-xs uppercase text-foreground">[ VERIFY-01 ] PRD Requirements Spec</span>
+                            <span className="text-[10px] text-muted-foreground block font-sans mt-0.5">Ensure all functional objectives in the product specification are satisfied.</span>
+                          </div>
+                        </label>
+                        <details className="text-[10.5px] text-muted-foreground pl-7.5">
+                          <summary className="cursor-pointer hover:text-foreground underline">View PRD Document</summary>
+                          <div className="mt-3 p-3 bg-card border border-border max-h-48 overflow-y-auto whitespace-pre-wrap font-sans text-xs leading-relaxed">
+                            {feature.prdContent}
+                          </div>
+                        </details>
+                      </div>
+
+                      {/* 2. Tasks */}
+                      <div className="border border-border p-4 bg-background/50 space-y-3">
+                        <label className="flex items-start gap-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={verifiedTasks}
+                            onChange={(e) => setVerifiedTasks(e.target.checked)}
+                            className="mt-0.5 h-4.5 w-4.5 accent-foreground cursor-pointer rounded-none border-border"
+                          />
+                          <div>
+                            <span className="font-bold text-xs uppercase text-foreground">[ VERIFY-02 ] Engineering Tasks Checklist</span>
+                            <span className="text-[10px] text-muted-foreground block font-sans mt-0.5">Confirm status and validation of all sub-tickets on the engineering board.</span>
+                          </div>
+                        </label>
+                        <details className="text-[10.5px] text-muted-foreground pl-7.5">
+                          <summary className="cursor-pointer hover:text-foreground underline">View Tasks Status ({tasks.filter(t => t.status === "done").length}/{tasks.length} Completed)</summary>
+                          <div className="mt-3 space-y-2 max-h-48 overflow-y-auto pl-2">
+                            {tasks.map(t => (
+                              <div key={t.id} className="flex items-center gap-2 text-xs">
+                                <span className={`px-1.5 py-0.2 border text-[8.5px] font-bold ${
+                                  t.status === "done" ? "border-emerald-500 text-emerald-500 bg-emerald-500/5" : "border-border text-muted-foreground"
+                                }`}>
+                                  {t.status.toUpperCase()}
+                                </span>
+                                <span className={t.status === "done" ? "line-through text-muted-foreground/60" : "text-foreground"}>
+                                  {t.title}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </details>
+                      </div>
+
+                      {/* 3. Pull Request */}
+                      <div className="border border-border p-4 bg-background/50 space-y-3">
+                        <label className="flex items-start gap-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={verifiedPr}
+                            onChange={(e) => setVerifiedPr(e.target.checked)}
+                            className="mt-0.5 h-4.5 w-4.5 accent-foreground cursor-pointer rounded-none border-border"
+                          />
+                          <div>
+                            <span className="font-bold text-xs uppercase text-foreground">[ VERIFY-03 ] Pull Request Files & Diffs</span>
+                            <span className="text-[10px] text-muted-foreground block font-sans mt-0.5">Ensure code modifications follow system boundaries and target the correct branch.</span>
+                          </div>
+                        </label>
+                        <details className="text-[10.5px] text-muted-foreground pl-7.5">
+                          <summary className="cursor-pointer hover:text-foreground underline">View Changed Files ({(pullRequest.diffData as any[]).length} files)</summary>
+                          <div className="mt-3 space-y-1.5 max-h-48 overflow-y-auto pl-2">
+                            <p className="text-[10px] text-foreground"><span className="text-muted-foreground">Title:</span> {pullRequest.title}</p>
+                            <p className="text-[10px] text-foreground mb-2"><span className="text-muted-foreground">Branch:</span> {feature.branchName}</p>
+                            {(pullRequest.diffData as any[]).map(f => (
+                              <div key={f.filepath} className="text-xs text-muted-foreground flex items-center justify-between border-b border-border/40 pb-1">
+                                <span>{f.filepath}</span>
+                                <Badge className="text-[8px] rounded-none py-0 px-1 border border-border uppercase">{f.status}</Badge>
+                              </div>
+                            ))}
+                          </div>
+                        </details>
+                      </div>
+
+                      {/* 4. AI Review History */}
+                      <div className="border border-border p-4 bg-background/50 space-y-3">
+                        <label className="flex items-start gap-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={verifiedAiHistory}
+                            onChange={(e) => setVerifiedAiHistory(e.target.checked)}
+                            className="mt-0.5 h-4.5 w-4.5 accent-foreground cursor-pointer rounded-none border-border"
+                          />
+                          <div>
+                            <span className="font-bold text-xs uppercase text-foreground">[ VERIFY-04 ] AI Review History & Findings</span>
+                            <span className="text-[10px] text-muted-foreground block font-sans mt-0.5">Audit the findings report generated by the Pinecone RAG AI reviewer.</span>
+                          </div>
+                        </label>
+                        <details className="text-[10.5px] text-muted-foreground pl-7.5">
+                          <summary className="cursor-pointer hover:text-foreground underline">View AI Compliance Details ({aiReview.status.toUpperCase()})</summary>
+                          <div className="mt-3 p-3 bg-card border border-border space-y-2 text-xs font-sans">
+                            <div className="flex items-center gap-1.5">
+                              <span className={`h-2 w-2 rounded-full ${aiReview.status === "passed" ? "bg-emerald-500" : "bg-red-500"}`} />
+                              <span className="font-bold">AI Review Status: {aiReview.status.toUpperCase()}</span>
+                            </div>
+                            <p className="text-muted-foreground leading-relaxed text-[11px]">{aiReview.summary}</p>
+                          </div>
+                        </details>
+                      </div>
+
+                      {/* 5. Outstanding Issues */}
+                      <div className="border border-border p-4 bg-background/50 space-y-3">
+                        <label className="flex items-start gap-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={verifiedIssues}
+                            onChange={(e) => setVerifiedIssues(e.target.checked)}
+                            className="mt-0.5 h-4.5 w-4.5 accent-foreground cursor-pointer rounded-none border-border"
+                          />
+                          <div>
+                            <span className="font-bold text-xs uppercase text-foreground">[ VERIFY-05 ] Outstanding Issues Summary</span>
+                            <span className="text-[10px] text-muted-foreground block font-sans mt-0.5">Verify that all blocking vulnerabilities are resolved and non-blocking warnings are acceptable.</span>
+                          </div>
+                        </label>
+                        <details className="text-[10.5px] text-muted-foreground pl-7.5">
+                          <summary className="cursor-pointer hover:text-foreground underline">View Issues List ({(aiReview.comments as any[]).length} total findings)</summary>
+                          <div className="mt-3 space-y-2 max-h-48 overflow-y-auto pl-2">
+                            {(aiReview.comments as any[]).map((c, i) => (
+                              <div key={i} className="text-xs p-2 border border-border/60 bg-muted/10 space-y-1">
+                                <div className="flex items-center gap-2 justify-between">
+                                  <span className={`text-[8px] font-bold px-1.5 py-0.2 border uppercase ${
+                                    c.type === "blocking" ? "border-red-500 text-red-500 bg-red-500/5" : "border-amber-500 text-amber-500 bg-amber-500/5"
+                                  }`}>
+                                    {c.type}
+                                  </span>
+                                  <span className="text-[9px] text-muted-foreground">{c.filepath} (Line {c.line})</span>
+                                </div>
+                                <p className="text-[10.5px] font-sans text-foreground leading-normal">{c.text}</p>
+                              </div>
+                            ))}
+                            {(aiReview.comments as any[]).length === 0 && (
+                              <p className="text-muted-foreground text-xs font-sans">No outstanding issues found by AI. Code review clean.</p>
+                            )}
+                          </div>
+                        </details>
+                      </div>
+                    </div>
+                  </CardContent>
+                  <CardFooter className="border-t border-border p-6 bg-muted/10 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <div className="text-[10px] text-muted-foreground font-sans text-center sm:text-left leading-relaxed">
+                      {!verifiedPrd || !verifiedTasks || !verifiedPr || !verifiedAiHistory || !verifiedIssues ? (
+                        <span className="text-red-500/80 font-bold block">⚠️ Please check all 5 items to unlock authorization controls.</span>
+                      ) : (
+                        <span className="text-emerald-500 font-bold block">✓ Release Authorization Unlocked</span>
+                      )}
+                      Select Approve to merge to production queue, or Reject to return to Fix-Needed queue.
+                    </div>
+                    <div className="flex items-center gap-3 shrink-0 w-full sm:w-auto">
+                      <Button
+                        variant="destructive"
+                        onClick={() => rejectReleaseMutation.mutate({ featureId })}
+                        disabled={rejectReleaseMutation.isPending}
+                        className="rounded-none py-5 px-6 uppercase text-xs tracking-wider font-mono font-bold flex-1 sm:flex-initial"
+                      >
+                        {rejectReleaseMutation.isPending ? "Rejecting..." : "Reject Release"}
+                      </Button>
+                      <Button
+                        onClick={() => approveReleaseMutation.mutate({ featureId })}
+                        disabled={
+                          !verifiedPrd || 
+                          !verifiedTasks || 
+                          !verifiedPr || 
+                          !verifiedAiHistory || 
+                          !verifiedIssues || 
+                          approveReleaseMutation.isPending
+                        }
+                        className="rounded-none py-5 px-6 bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 disabled:hover:bg-neutral-800 disabled:bg-neutral-800 disabled:text-muted-foreground/80 border border-emerald-500 uppercase text-xs tracking-wider font-mono font-bold flex-1 sm:flex-initial"
+                      >
+                        {approveReleaseMutation.isPending ? "Approving..." : "Approve Release"}
+                      </Button>
+                    </div>
+                  </CardFooter>
+                </Card>
               )}
 
               {/* Code Diff Panel */}
