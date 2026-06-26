@@ -10,6 +10,7 @@ import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "~/c
 import { Input } from "~/components/ui/input";
 import { useSignin } from "~/hooks/api/auth";
 import { GoogleAuthButton } from "~/components/google-auth-button";
+import { GithubAuthButton } from "~/components/github-auth-button";
 import { Sparkles } from "lucide-react";
 
 function getSafeNextPath() {
@@ -75,9 +76,10 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
           </CardDescription>
         </CardHeader>
         <CardContent className="relative z-10">
-          <div className="mb-6 space-y-4">
+          <div className="mb-6 space-y-2">
             <GoogleAuthButton />
-            <div className="flex items-center gap-3 text-xs uppercase tracking-wider text-muted-foreground/60">
+            <GithubAuthButton />
+            <div className="flex items-center pt-2 gap-3 text-xs uppercase tracking-wider text-muted-foreground/60">
               <div className="h-px flex-1 bg-border/50" />
               <span>or connect with email</span>
               <div className="h-px flex-1 bg-border/50" />
