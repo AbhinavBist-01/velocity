@@ -20,6 +20,7 @@
     "node": ">=18"
   },
   "dependencies": {
+    "@octokit/rest": "^22.0.1",
     "dotenv-cli": "^11.0.0"
   }
 }
