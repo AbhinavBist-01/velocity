@@ -1,10 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
-  --font-sans: var(--font-font-geist-sans), var(--font-geist-sans), system-ui, sans-serif;
+  --font-sans: "Inter", var(--font-font-geist-sans), var(--font-geist-sans), system-ui, sans-serif;
   --font-mono: var(--font-font-geist-mono), var(--font-geist-mono), monospace;
   --radius-sm: 0px;
   --radius-md: 2px;
@@ -268,4 +269,18 @@ input:focus, textarea:focus, select:focus {
   box-shadow: 
     0 15px 30px color-mix(in srgb, var(--foreground) 10%, transparent),
     inset 0 1px 0 color-mix(in srgb, var(--foreground) 15%, transparent);
+}
+
+@keyframes spin-in {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.3) rotate(-180deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1) rotate(0deg);
+  }
+}
+.animate-spin-in {
+  animation: spin-in 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }

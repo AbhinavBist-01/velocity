@@ -208,6 +208,25 @@ export default function FeaturePipeline() {
   const [editTaskTitle, setEditTaskTitle] = useState("");
   const [editTaskDescription, setEditTaskDescription] = useState("");
   const [editTaskPriority, setEditTaskPriority] = useState("medium");
+  const [hoveredTaskId, setHoveredTaskId] = useState<string | null>(null);
+  const [renderedTaskId, setRenderedTaskId] = useState<string | null>(null);
+  const [isAnimatingActive, setIsAnimatingActive] = useState(false);
+
+  useEffect(() => {
+    if (hoveredTaskId) {
+      setRenderedTaskId(hoveredTaskId);
+      const timer = setTimeout(() => {
+        setIsAnimatingActive(true);
+      }, 10);
+      return () => clearTimeout(timer);
+    } else {
+      setIsAnimatingActive(false);
+      const timer = setTimeout(() => {
+        setRenderedTaskId(null);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [hoveredTaskId]);
 
   // Human Review Deck States
   const [verifiedPrd, setVerifiedPrd] = useState(false);
@@ -788,7 +807,7 @@ export default function FeaturePipeline() {
               </div>
 
               {/* Kanban columns */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-mono text-xs">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 font-sans text-sm">
                 {[
                   { id: "todo", label: "01 / To Do", colorClass: "text-muted-foreground" },
                   { id: "in_progress", label: "02 / In Progress", colorClass: "text-foreground" },
@@ -803,39 +822,45 @@ export default function FeaturePipeline() {
                       onDragOver={(e) => handleDragOver(e, col.id)}
                       onDragLeave={handleDragLeave}
                       onDrop={(e) => handleDrop(e, col.id)}
-                      className={`space-y-4 p-2 transition-all border ${
+                      className={`space-y-4 p-3 transition-all duration-300 border rounded-xl bg-foreground/[0.01]/10 ${
                         isDragActive 
-                          ? "border-dashed border-foreground bg-foreground/[0.03]" 
-                          : "border-transparent"
+                          ? "border-foreground bg-foreground/[0.04] scale-[1.01] shadow-lg shadow-foreground/[0.02]" 
+                          : "border-border/60"
                       }`}
                     >
-                      <div className="flex items-center justify-between border-b border-border pb-2 px-1">
-                        <span className={`font-bold uppercase tracking-wider ${col.colorClass}`}>{col.label}</span>
-                        <span className="border border-border/80 px-2 py-0.5 text-[10px] text-muted-foreground">{columnTasks.length}</span>
+                      <div className="flex items-center justify-between border-b border-border/80 pb-3 px-1">
+                        <span className={`font-black uppercase tracking-wider text-xs ${col.colorClass}`}>{col.label}</span>
+                        <span className="border border-border/80 bg-background/50 px-2 py-0.5 text-[10px] text-muted-foreground rounded-full font-mono">{columnTasks.length}</span>
                       </div>
                       
-                      <div className="space-y-3 min-h-[350px] flex flex-col justify-start">
+                      <div className="space-y-3.5 min-h-[380px] flex flex-col justify-start py-1">
                         {columnTasks.map((t) => (
                           <div 
                             key={t.id} 
                             draggable={feature.status === "tasks_breakdown"}
                             onDragStart={(e) => e.dataTransfer.setData("taskId", t.id)}
-                            className={`border bg-card p-4 space-y-3 relative group transition-all ${
+                            onMouseEnter={() => setHoveredTaskId(t.id)}
+                            onMouseLeave={() => setHoveredTaskId(null)}
+                            className={`border bg-card p-5 space-y-3.5 relative group transition-all duration-300 rounded-lg ${
                               feature.status === "tasks_breakdown" 
-                                ? "hover:border-foreground cursor-grab active:cursor-grabbing" 
+                                ? "hover:border-foreground/80 hover:-translate-y-1 hover:shadow-lg hover:shadow-foreground/[0.03] cursor-grab active:cursor-grabbing" 
                                 : "opacity-85"
-                            } ${t.status === "done" ? "border-border/45 opacity-70 bg-muted/5" : "border-border"}`}
+                            } ${t.status === "done" ? "border-border/30 opacity-60 bg-muted/[0.02]" : "border-border shadow-sm"}`}
                           >
                             <div className="flex items-center justify-between gap-2">
-                              <span className={`border px-1.5 py-0.2 text-[9px] uppercase font-bold shrink-0 ${
-                                t.priority === "high" ? "border-red-500 text-red-500 bg-red-500/5" : t.priority === "medium" ? "border-amber-500 text-amber-500 bg-amber-500/5" : "border-border text-muted-foreground"
+                              <span className={`border px-2 py-0.5 text-[9.5px] uppercase font-mono font-bold tracking-wider rounded-none shrink-0 ${
+                                t.priority === "high" 
+                                  ? "border-red-500/30 text-red-500 bg-red-500/5" 
+                                  : t.priority === "medium" 
+                                    ? "border-amber-500/30 text-amber-500 bg-amber-500/5" 
+                                    : "border-border text-muted-foreground bg-muted/10"
                               }`}>
                                 {t.priority}
                               </span>
                               
                               {/* Edit / Delete / Move Buttons */}
                               {feature.status === "tasks_breakdown" ? (
-                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                                   <Button
                                     variant="ghost"
                                     size="icon"
@@ -864,8 +889,8 @@ export default function FeaturePipeline() {
                               )}
                             </div>
                             
-                            <h4 className={`font-bold text-xs uppercase text-foreground leading-tight ${t.status === "done" ? "line-through text-muted-foreground/60" : ""}`}>{t.title}</h4>
-                            <p className={`text-muted-foreground text-[10px] font-sans leading-relaxed ${t.status === "done" ? "line-through" : ""}`}>{t.description}</p>
+                            <h4 className={`font-bold text-sm uppercase text-foreground leading-tight tracking-tight ${t.status === "done" ? "line-through text-muted-foreground/50" : ""}`}>{t.title}</h4>
+                            <p className={`text-muted-foreground text-xs font-sans leading-relaxed line-clamp-2 ${t.status === "done" ? "line-through text-muted-foreground/40" : ""}`}>{t.description}</p>
                             
                             {/* Directional Move Buttons */}
                             {feature.status === "tasks_breakdown" && (
@@ -896,7 +921,7 @@ export default function FeaturePipeline() {
                         ))}
                         
                         {columnTasks.length === 0 && (
-                          <div className="border border-dashed border-border/40 p-8 text-center text-muted-foreground/40 font-sans text-[10px] rounded-none uppercase tracking-wider">
+                          <div className="border border-dashed border-border/30 p-10 text-center text-muted-foreground/35 font-sans text-xs rounded-lg uppercase tracking-wider flex items-center justify-center min-h-[120px] bg-muted/[0.01]">
                             Empty Column
                           </div>
                         )}
@@ -905,6 +930,53 @@ export default function FeaturePipeline() {
                   );
                 })}
               </div>
+
+              {/* Task Preview Modal on Hover */}
+              {renderedTaskId && (
+                (() => {
+                  const t = tasks.find(x => x.id === renderedTaskId);
+                  if (!t) return null;
+                  return (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
+                      {/* Blur Backdrop */}
+                      <div className={`absolute inset-0 bg-background/50 transition-all duration-300 ease-in-out ${
+                        isAnimatingActive ? "opacity-100 backdrop-blur-md" : "opacity-0 backdrop-blur-none"
+                      }`} />
+                      
+                      {/* Spinning Centered Card */}
+                      <div className={`border-2 border-foreground bg-card p-6 w-full max-w-lg shadow-2xl relative rounded-xl transition-all duration-300 cubic-bezier(0.34, 1.56, 0.64, 1) pointer-events-none space-y-4 text-left ${
+                        isAnimatingActive 
+                          ? "opacity-100 scale-100 rotate-0 translate-y-0" 
+                          : "opacity-0 scale-75 -rotate-12 translate-y-8"
+                      }`}>
+                        <div className="flex items-center justify-between border-b border-border pb-2.5">
+                          <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">// Product Ticket Details</span>
+                          <span className={`border px-2 py-0.5 text-[9.5px] uppercase font-mono font-bold tracking-wider rounded-none shrink-0 ${
+                            t.priority === "high" 
+                              ? "border-red-500/30 text-red-500 bg-red-500/5" 
+                              : t.priority === "medium" 
+                                ? "border-amber-500/30 text-amber-500 bg-amber-500/5" 
+                                : "border-border text-muted-foreground bg-muted/10"
+                          }`}>
+                            {t.priority} priority
+                          </span>
+                        </div>
+                        
+                        <h4 className="font-bold text-base uppercase text-foreground leading-tight tracking-tight">{t.title}</h4>
+                        
+                        <div className="text-foreground/90 text-sm font-sans leading-relaxed whitespace-pre-wrap max-h-[300px] overflow-y-auto pr-2">
+                          {t.description}
+                        </div>
+                        
+                        <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground border-t border-border/40 pt-3">
+                          <span>Status: <strong className="text-foreground uppercase">{t.status.replace("_", " ")}</strong></span>
+                          <span>Velocity Kanban // Task-{t.id.slice(0, 6)}</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
 
               {/* Add Custom Task Modal */}
               {showCreateModal && (
