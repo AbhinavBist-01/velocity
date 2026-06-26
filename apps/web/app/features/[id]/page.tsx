@@ -213,19 +213,29 @@ export default function FeaturePipeline() {
   const [isAnimatingActive, setIsAnimatingActive] = useState(false);
 
   useEffect(() => {
+    let animTimer: NodeJS.Timeout;
+    let openTimer: NodeJS.Timeout;
+    let exitTimer: NodeJS.Timeout;
+
     if (hoveredTaskId) {
-      setRenderedTaskId(hoveredTaskId);
-      const timer = setTimeout(() => {
-        setIsAnimatingActive(true);
-      }, 10);
-      return () => clearTimeout(timer);
+      openTimer = setTimeout(() => {
+        setRenderedTaskId(hoveredTaskId);
+        animTimer = setTimeout(() => {
+          setIsAnimatingActive(true);
+        }, 10);
+      }, 150); // Ultra-snappy 150ms hover delay
     } else {
       setIsAnimatingActive(false);
-      const timer = setTimeout(() => {
+      exitTimer = setTimeout(() => {
         setRenderedTaskId(null);
-      }, 300);
-      return () => clearTimeout(timer);
+      }, 100); // Snappy 100ms exit delay
     }
+
+    return () => {
+      clearTimeout(openTimer);
+      clearTimeout(exitTimer);
+      if (animTimer) clearTimeout(animTimer);
+    };
   }, [hoveredTaskId]);
 
   // Human Review Deck States
@@ -841,10 +851,10 @@ export default function FeaturePipeline() {
                             onDragStart={(e) => e.dataTransfer.setData("taskId", t.id)}
                             onMouseEnter={() => setHoveredTaskId(t.id)}
                             onMouseLeave={() => setHoveredTaskId(null)}
-                            className={`border bg-card p-5 space-y-3.5 relative group transition-all duration-300 rounded-lg ${
+                            className={`border bg-card p-5 space-y-3.5 relative group transition-all duration-300 rounded-lg hover:border-foreground/80 hover:-translate-y-1 hover:shadow-lg hover:shadow-foreground/[0.03] ${
                               feature.status === "tasks_breakdown" 
-                                ? "hover:border-foreground/80 hover:-translate-y-1 hover:shadow-lg hover:shadow-foreground/[0.03] cursor-grab active:cursor-grabbing" 
-                                : "opacity-85"
+                                ? "cursor-grab active:cursor-grabbing" 
+                                : "cursor-pointer opacity-90"
                             } ${t.status === "done" ? "border-border/30 opacity-60 bg-muted/[0.02]" : "border-border shadow-sm"}`}
                           >
                             <div className="flex items-center justify-between gap-2">
@@ -939,17 +949,17 @@ export default function FeaturePipeline() {
                   return (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
                       {/* Blur Backdrop */}
-                      <div className={`absolute inset-0 bg-background/50 transition-all duration-300 ease-in-out ${
-                        isAnimatingActive ? "opacity-100 backdrop-blur-md" : "opacity-0 backdrop-blur-none"
+                      <div className={`absolute inset-0 bg-black/40 backdrop-blur-md transition-opacity duration-150 ease-in-out ${
+                        isAnimatingActive ? "opacity-100" : "opacity-0"
                       }`} />
                       
-                      {/* Spinning Centered Card */}
-                      <div className={`border-2 border-foreground bg-card p-6 w-full max-w-lg shadow-2xl relative rounded-xl transition-all duration-300 cubic-bezier(0.34, 1.56, 0.64, 1) pointer-events-none space-y-4 text-left ${
+                      {/* Centered Card */}
+                      <div className={`border-2 border-foreground bg-card p-7 space-y-6 w-full max-w-lg shadow-2xl relative rounded-xl transition-all duration-150 ease-out pointer-events-none text-left ${
                         isAnimatingActive 
-                          ? "opacity-100 scale-100 rotate-0 translate-y-0" 
-                          : "opacity-0 scale-75 -rotate-12 translate-y-8"
+                          ? "opacity-100 scale-100 translate-y-0" 
+                          : "opacity-0 scale-95 translate-y-2"
                       }`}>
-                        <div className="flex items-center justify-between border-b border-border pb-2.5">
+                        <div className="flex items-center justify-between border-b border-border pb-3">
                           <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">// Product Ticket Details</span>
                           <span className={`border px-2 py-0.5 text-[9.5px] uppercase font-mono font-bold tracking-wider rounded-none shrink-0 ${
                             t.priority === "high" 
@@ -962,13 +972,13 @@ export default function FeaturePipeline() {
                           </span>
                         </div>
                         
-                        <h4 className="font-bold text-base uppercase text-foreground leading-tight tracking-tight">{t.title}</h4>
+                        <h4 className="font-bold text-lg uppercase text-foreground leading-snug tracking-tight">{t.title}</h4>
                         
                         <div className="text-foreground/90 text-sm font-sans leading-relaxed whitespace-pre-wrap max-h-[300px] overflow-y-auto pr-2">
                           {t.description}
                         </div>
                         
-                        <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground border-t border-border/40 pt-3">
+                        <div className="flex items-center justify-between text-[10px] font-mono text-muted-foreground border-t border-border/40 pt-4">
                           <span>Status: <strong className="text-foreground uppercase">{t.status.replace("_", " ")}</strong></span>
                           <span>Velocity Kanban // Task-{t.id.slice(0, 6)}</span>
                         </div>

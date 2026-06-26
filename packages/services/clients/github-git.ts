@@ -13,7 +13,8 @@ export async function createGithubBranchAndPR(input: {
 }) {
   const { repoFullName, branchName, token, files, prTitle, prBody } = input;
 
-  console.log(`Starting GitHub branch & PR creation on ${repoFullName} for branch ${branchName}...`);
+  console.log(`[github-git] Starting GitHub branch & PR creation on ${repoFullName} for branch ${branchName}...`);
+  console.log(`[github-git] Token length: ${token?.length ?? 0}, Token prefix: ${token?.substring(0, 8)}...`);
 
   // 1. Get default branch name (usually main or master)
   const repoRes = await fetch(`https://api.github.com/repos/${repoFullName}`, {
@@ -23,8 +24,11 @@ export async function createGithubBranchAndPR(input: {
       "User-Agent": "Velocity-App",
     },
   });
+  console.log(`[github-git] Step 1 - GET repo info: ${repoRes.status} ${repoRes.statusText}`);
   if (!repoRes.ok) {
-    throw new Error(`Failed to fetch repo info from GitHub: ${await repoRes.text()}`);
+    const errBody = await repoRes.text();
+    console.error(`[github-git] Step 1 FAILED:`, errBody);
+    throw new Error(`Failed to fetch repo info from GitHub (${repoRes.status}): ${errBody}`);
   }
   const repoInfo = await repoRes.json();
   const defaultBranch = repoInfo.default_branch || "main";
@@ -37,8 +41,11 @@ export async function createGithubBranchAndPR(input: {
       "User-Agent": "Velocity-App",
     },
   });
+  console.log(`[github-git] Step 2 - GET ref/heads/${defaultBranch}: ${refRes.status} ${refRes.statusText}`);
   if (!refRes.ok) {
-    throw new Error(`Failed to fetch default branch SHA: ${await refRes.text()}`);
+    const errBody = await refRes.text();
+    console.error(`[github-git] Step 2 FAILED:`, errBody);
+    throw new Error(`Failed to fetch default branch SHA (${refRes.status}): ${errBody}`);
   }
   const refInfo = await refRes.json();
   const parentSha = refInfo.object.sha;
@@ -57,15 +64,17 @@ export async function createGithubBranchAndPR(input: {
     }),
   });
 
+  console.log(`[github-git] Step 3 - POST create ref: ${createRefRes.status} ${createRefRes.statusText}`);
   if (!createRefRes.ok) {
     const errText = await createRefRes.text();
+    console.warn(`[github-git] Step 3 non-OK response:`, errText);
     // If the branch already exists, we will reuse it. Otherwise, throw.
     if (!errText.includes("Reference already exists")) {
-      throw new Error(`Failed to create branch reference: ${errText}`);
+      throw new Error(`Failed to create branch reference (${createRefRes.status}): ${errText}`);
     }
-    console.log(`Branch ${branchName} already exists, committing to it.`);
+    console.log(`[github-git] Branch ${branchName} already exists, committing to it.`);
   } else {
-    console.log(`Created branch ${branchName} successfully.`);
+    console.log(`[github-git] Created branch ${branchName} successfully.`);
   }
 
   // 4. Commit files one-by-one to the branch
@@ -100,10 +109,13 @@ export async function createGithubBranchAndPR(input: {
       }),
     });
 
+    console.log(`[github-git] Step 4 - PUT contents/${path}: ${commitRes.status} ${commitRes.statusText}`);
     if (!commitRes.ok) {
-      throw new Error(`Failed to commit file ${path}: ${await commitRes.text()}`);
+      const errBody = await commitRes.text();
+      console.error(`[github-git] Step 4 FAILED for ${path}:`, errBody);
+      throw new Error(`Failed to commit file ${path} (${commitRes.status}): ${errBody}`);
     }
-    console.log(`Committed ${path} to branch ${branchName}`);
+    console.log(`[github-git] Committed ${path} to branch ${branchName}`);
   }
 
   // 5. Create Pull Request
@@ -122,8 +134,10 @@ export async function createGithubBranchAndPR(input: {
     }),
   });
 
+  console.log(`[github-git] Step 5 - POST create PR: ${prRes.status} ${prRes.statusText}`);
   if (!prRes.ok) {
     const errText = await prRes.text();
+    console.warn(`[github-git] Step 5 non-OK response:`, errText);
     // If the PR already exists, try to get it. Otherwise, throw.
     if (errText.includes("A pull request already exists")) {
       console.log(`Pull request already exists, searching for active PR...`);
@@ -145,6 +159,6 @@ export async function createGithubBranchAndPR(input: {
   }
 
   const prInfo = await prRes.json();
-  console.log(`Created Pull Request #${prInfo.number} successfully.`);
+  console.log(`[github-git] Created Pull Request #${prInfo.number} successfully. URL: ${prInfo.html_url}`);
   return prInfo;
 }

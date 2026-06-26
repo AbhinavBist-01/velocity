@@ -568,13 +568,29 @@ export const featureRouter = router({
         .then(rows => rows[0]);
     }
 
+    // --- DIAGNOSTIC LOGGING ---
+    console.log("[initializeBranch] userId:", userId);
+    console.log("[initializeBranch] githubAccount found:", !!githubAccount);
+    console.log("[initializeBranch] githubAccount.accessToken exists:", !!(githubAccount?.accessToken));
+    console.log("[initializeBranch] githubAccount.accessToken length:", githubAccount?.accessToken?.length ?? 0);
+    console.log("[initializeBranch] project.githubRepo:", project.githubRepo);
+    console.log("[initializeBranch] project.githubRepo includes '/':", project.githubRepo?.includes("/"));
+    console.log("[initializeBranch] branchName:", branchName);
+    console.log("[initializeBranch] diffData files count:", diffData.length);
+    // --- END DIAGNOSTIC LOGGING ---
+
     // 3. Create real branch & PR on GitHub if token and repo exist
-    if (githubAccount && githubAccount.accessToken && project.githubRepo && project.githubRepo.includes("/")) {
+    const canCreateGithubPR = !!(githubAccount && githubAccount.accessToken && project.githubRepo && project.githubRepo.includes("/"));
+    console.log("[initializeBranch] canCreateGithubPR:", canCreateGithubPR);
+
+    if (canCreateGithubPR) {
       try {
         const commitFiles = diffData.map((f: any) => ({
           filepath: f.filepath,
           content: f.content,
         }));
+        
+        console.log("[initializeBranch] Calling createGithubBranchAndPR with repo:", project.githubRepo, "branch:", branchName, "files:", commitFiles.length);
         
         const prInfo = await createGithubBranchAndPR({
           repoFullName: project.githubRepo,
@@ -585,12 +601,23 @@ export const featureRouter = router({
           prBody: `AI-generated Pull Request matching PRD specifications.\n\n### Requirement Specs:\n${feature.description}`,
         });
 
+        console.log("[initializeBranch] createGithubBranchAndPR returned:", JSON.stringify(prInfo ? { number: prInfo.number, html_url: prInfo.html_url } : null));
+
         if (prInfo && prInfo.number) {
           prNumber = prInfo.number;
         }
-      } catch (githubErr) {
-        console.error("Failed to create branch/PR on GitHub, falling back to mock reference creation:", githubErr);
+      } catch (githubErr: any) {
+        console.error("[initializeBranch] FAILED to create branch/PR on GitHub:", githubErr?.message || githubErr);
+        console.error("[initializeBranch] Full error:", githubErr);
+        // Don't silently swallow - log clearly that we're falling back
+        console.warn("[initializeBranch] Falling back to local-only PR record (no real GitHub branch created).");
       }
+    } else {
+      console.warn("[initializeBranch] SKIPPING GitHub branch creation because conditions not met. Checklist:");
+      console.warn("  - githubAccount exists:", !!githubAccount);
+      console.warn("  - accessToken exists:", !!(githubAccount?.accessToken));
+      console.warn("  - githubRepo exists:", !!project.githubRepo);
+      console.warn("  - githubRepo has '/':", project.githubRepo?.includes("/"));
     }
 
     // Set branch in feature

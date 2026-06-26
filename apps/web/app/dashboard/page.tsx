@@ -244,21 +244,21 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex min-h-screen bg-background text-foreground font-mono bg-grid-dots relative">
+    <div className="flex min-h-screen bg-background text-foreground font-sans bg-grid-dots relative">
       {/* Sidebar */}
-      <aside className={`${isCollapsed ? "w-16 px-2 py-6" : "w-64 p-6"} border-r border-border bg-card/85 backdrop-blur-md flex flex-col justify-between shrink-0 hidden md:flex transition-all duration-300 relative`}>
+      <aside className={`${isCollapsed ? "w-16 px-2 py-6" : "w-72 p-7"} border-r border-border bg-card/85 backdrop-blur-md flex flex-col justify-between shrink-0 hidden md:flex transition-all duration-300 relative`}>
         <div>
           <div className="flex items-center justify-center mb-8 relative w-full">
             <Link href="/" className={`flex items-center ${isCollapsed ? "justify-center" : "gap-3"} w-full`}>
-              <div className="h-9 w-9 bg-foreground text-background flex items-center justify-center font-black text-sm tracking-tighter shrink-0">
+              <div className="h-10 w-10 bg-foreground text-background flex items-center justify-center font-black text-sm tracking-tighter shrink-0">
                 VL
               </div>
               {!isCollapsed && (
                 <div>
-                  <h1 className="font-bold text-xs uppercase tracking-wider leading-tight">Velocity</h1>
-                  <span className="text-[9px] text-muted-foreground uppercase tracking-widest block font-medium">Delivery Engine</span>
+                  <h1 className="font-bold text-sm uppercase tracking-wider leading-tight">Velocity</h1>
+                  <span className="text-xs text-muted-foreground uppercase tracking-widest block font-medium">Delivery Engine</span>
                   {user && (
-                    <span className="text-[8px] text-primary/80 uppercase tracking-wider block font-semibold mt-0.5 max-w-[120px] truncate">
+                    <span className="text-[11px] text-primary/80 uppercase tracking-wider block font-semibold mt-0.5 max-w-[140px] truncate">
                       {user.fullName}
                     </span>
                   )}
@@ -274,7 +274,7 @@ export default function Dashboard() {
             </button>
           </div>
 
-          <nav className="space-y-2 text-xs uppercase tracking-wider w-full">
+          <nav className="space-y-1.5 text-xs uppercase tracking-wider w-full">
             <button
               onClick={() => setActiveTab("projects")}
               title="Projects"
@@ -284,8 +284,8 @@ export default function Dashboard() {
                   : "border-transparent text-muted-foreground hover:border-border"
               } ${
                 isCollapsed 
-                  ? "h-10 w-10 justify-center mx-auto p-0" 
-                  : "px-3 py-2.5 gap-3 w-full text-left"
+                  ? "h-11 w-11 justify-center mx-auto p-0" 
+                  : "px-4 py-3 gap-3 w-full text-left"
               }`}
             >
               <Kanban className="h-4 w-4 shrink-0" />
@@ -300,8 +300,8 @@ export default function Dashboard() {
                   : "border-transparent text-muted-foreground hover:border-border"
               } ${
                 isCollapsed 
-                  ? "h-10 w-10 justify-center mx-auto p-0" 
-                  : "px-3 py-2.5 gap-3 w-full text-left"
+                  ? "h-11 w-11 justify-center mx-auto p-0" 
+                  : "px-4 py-3 gap-3 w-full text-left"
               }`}
             >
               <Github className="h-4 w-4 shrink-0" />
@@ -312,8 +312,8 @@ export default function Dashboard() {
 
         <div className="space-y-4 w-full">
           {!isCollapsed && (
-            <div className="p-4 border border-border bg-background/50 text-[10px] text-muted-foreground leading-relaxed">
-              <p className="font-bold text-foreground mb-1 uppercase tracking-widest">// PAIR_PROG_ACTIVE</p>
+            <div className="p-4 border border-border bg-background/50 text-xs text-muted-foreground leading-relaxed">
+              <p className="font-bold text-foreground mb-1.5 uppercase tracking-widest text-[11px]">// PAIR_PROG_ACTIVE</p>
               <p>Move features from idea to prod with typesafe AI guidance hooks.</p>
             </div>
           )}
@@ -321,10 +321,10 @@ export default function Dashboard() {
           <button
             onClick={() => logout()}
             title="Logout"
-            className={`flex items-center transition-all duration-200 border border-transparent hover:border-destructive hover:text-destructive hover:bg-destructive/10 font-mono text-xs uppercase tracking-wider ${
+            className={`flex items-center transition-all duration-200 border border-transparent hover:border-destructive hover:text-destructive hover:bg-destructive/10 font-sans text-xs uppercase tracking-wider ${
               isCollapsed 
-                ? "h-10 w-10 justify-center mx-auto p-0 text-muted-foreground" 
-                : "px-3 py-2.5 gap-3 w-full text-left"
+                ? "h-11 w-11 justify-center mx-auto p-0 text-muted-foreground" 
+                : "px-4 py-3 gap-3 w-full text-left"
             }`}
           >
             <LogOut className="h-4 w-4 shrink-0" />
@@ -335,20 +335,20 @@ export default function Dashboard() {
 
       {/* Main Content */}
       {/* Main Content */}
-      <main className="flex-1 p-8 lg:p-12 overflow-y-auto border-l border-border/40">
+      <main className="flex-1 p-8 lg:p-14 overflow-y-auto border-l border-border/40">
         {activeTab === "projects" ? (
           <>
-            <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-12 border-b border-border/60 pb-8">
+            <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-14 border-b border-border/60 pb-10">
               <div>
-                <div className="flex items-center gap-2 mb-1.5 text-[10px] text-muted-foreground uppercase tracking-widest">
+                <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground uppercase tracking-widest">
                   <span>System Cockpit</span>
                   <span>/</span>
                   <span>Workspace Registry</span>
                 </div>
-                <h1 className="text-3xl lg:text-4xl font-black tracking-tighter uppercase text-foreground">
+                <h1 className="text-3xl lg:text-5xl font-black tracking-tighter uppercase text-foreground">
                   Deliver Features Faster
                 </h1>
-                <p className="text-muted-foreground text-sm mt-1 leading-relaxed max-w-2xl font-sans">
+                <p className="text-muted-foreground text-base mt-3 leading-relaxed max-w-2xl font-sans">
                   Manage your product discovery, PRD specifications, tasks, AI reviews, and production releases in a stark unified dashboard.
                 </p>
               </div>
@@ -541,31 +541,31 @@ export default function Dashboard() {
             </header>
 
             {isLoading ? (
-              <div className="flex flex-col items-center justify-center py-32 gap-4">
-                <Spinner className="h-6 w-6 text-foreground" />
-                <p className="text-muted-foreground text-xs uppercase tracking-widest font-bold animate-pulse">Loading projects...</p>
+              <div className="flex flex-col items-center justify-center py-32 gap-5">
+                <Spinner className="h-7 w-7 text-foreground" />
+                <p className="text-muted-foreground text-sm uppercase tracking-widest font-bold animate-pulse">Loading projects...</p>
               </div>
             ) : !projects || projects.length === 0 ? (
-              <div className="border border-border bg-card rounded-none p-16 text-center max-w-xl mx-auto flex flex-col items-center gap-6 mt-8">
-                <div className="p-4 border border-border bg-background">
-                  <Kanban className="h-8 w-8 text-foreground" />
+              <div className="border border-border bg-card rounded-none p-20 text-center max-w-xl mx-auto flex flex-col items-center gap-7 mt-8">
+                <div className="p-5 border border-border bg-background">
+                  <Kanban className="h-9 w-9 text-foreground" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold uppercase mb-2">No Projects Configured</h2>
-                  <p className="text-muted-foreground text-xs leading-relaxed max-w-md mx-auto font-sans">
+                  <h2 className="text-xl font-bold uppercase mb-3">No Projects Configured</h2>
+                  <p className="text-muted-foreground text-sm leading-relaxed max-w-md mx-auto font-sans">
                     Kick off the Velocity lifecycle. Add your first project, define requirements, generate branches, run reviews, and ship features.
                   </p>
                 </div>
                 <Button
                   onClick={() => setIsCreateOpen(true)}
-                  className="gap-2 font-mono text-xs uppercase tracking-widest bg-foreground text-background hover:bg-neutral-800 border-2 border-foreground py-6 px-8 rounded-none transition-all"
+                  className="gap-2 font-sans text-sm uppercase tracking-widest bg-foreground text-background hover:bg-neutral-800 border-2 border-foreground py-6 px-10 rounded-none transition-all"
                 >
                   <Plus className="h-4 w-4" />
                   <span>Create Your First Project</span>
                 </Button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
                 {projects.map((project) => (
                   <div 
                     key={project.id} 
@@ -573,27 +573,27 @@ export default function Dashboard() {
                   >
                     <div className="w-full h-1 bg-foreground/20 group-hover:bg-foreground transition-all duration-300" />
                     
-                    <div className="p-6 flex-1 flex flex-col justify-between">
+                    <div className="p-7 flex-1 flex flex-col justify-between">
                       <div>
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center gap-1.5 text-[9px] font-bold text-muted-foreground bg-background border border-border py-1 px-2.5">
-                            <Github className="h-3 w-3 shrink-0" />
-                            <span className="truncate max-w-[150px] uppercase">{project.githubRepo.replace("https://", "").replace("github.com/", "")}</span>
+                        <div className="flex items-center justify-between mb-5">
+                          <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground bg-background border border-border py-1.5 px-3">
+                            <Github className="h-3.5 w-3.5 shrink-0" />
+                            <span className="truncate max-w-[160px] uppercase">{project.githubRepo.replace("https://", "").replace("github.com/", "")}</span>
                           </div>
                         </div>
-                        <h3 className="text-lg font-black uppercase text-foreground mb-3 truncate group-hover:text-primary transition-all">
+                        <h3 className="text-xl font-black uppercase text-foreground mb-3 truncate group-hover:text-primary transition-all">
                           {project.name}
                         </h3>
-                        <p className="text-muted-foreground text-xs font-sans leading-relaxed line-clamp-3">
+                        <p className="text-muted-foreground text-sm font-sans leading-relaxed line-clamp-3">
                           {project.description}
                         </p>
                       </div>
 
-                      <div className="mt-6 pt-4 border-t border-border/60">
+                      <div className="mt-7 pt-5 border-t border-border/60">
                         <Link href={`/projects/${project.id}`} className="w-full block">
-                          <Button variant="secondary" className="w-full justify-between rounded-none py-5 px-4 font-mono text-xs uppercase tracking-wider bg-background text-foreground border border-border hover:bg-foreground hover:text-background hover:border-foreground transition-all group/btn">
+                          <Button variant="secondary" className="w-full justify-between rounded-none py-5 px-5 font-sans text-sm uppercase tracking-wider bg-background text-foreground border border-border hover:bg-foreground hover:text-background hover:border-foreground transition-all group/btn">
                             <span>Open Workspace</span>
-                            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover/btn:translate-x-1" />
+                            <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
                           </Button>
                         </Link>
                       </div>
@@ -605,26 +605,26 @@ export default function Dashboard() {
           </>
         ) : (
           /* GitHub Hub Console */
-          <div className="space-y-6">
-            <header className="border-b border-border/60 pb-6 mb-6">
-              <div className="flex items-center gap-2 mb-1.5 text-[10px] text-muted-foreground uppercase tracking-widest">
+          <div className="space-y-8">
+            <header className="border-b border-border/60 pb-8 mb-8">
+              <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground uppercase tracking-widest">
                 <span>Developer Console</span>
                 <span>/</span>
                 <span>GitHub Orchestrator</span>
               </div>
-              <h1 className="text-3xl font-black uppercase tracking-tighter text-foreground flex items-center gap-3">
-                <Github className="h-8 w-8 text-foreground shrink-0" />
+              <h1 className="text-3xl lg:text-4xl font-black uppercase tracking-tighter text-foreground flex items-center gap-4">
+                <Github className="h-9 w-9 text-foreground shrink-0" />
                 <span>GitHub Core Developer Deck</span>
               </h1>
-              <p className="text-muted-foreground text-sm font-sans mt-1">
+              <p className="text-muted-foreground text-base font-sans mt-3 leading-relaxed">
                 Execute Git operations, trigger Pull Requests, perform comparative diff audits, and review repository contribution stats.
               </p>
             </header>
 
             {isSessionPending ? (
-              <div className="flex flex-col items-center justify-center py-24 gap-4">
-                <Spinner className="h-6 w-6 text-foreground" />
-                <p className="text-muted-foreground text-xs uppercase tracking-widest font-bold animate-pulse">Checking GitHub Credentials...</p>
+              <div className="flex flex-col items-center justify-center py-24 gap-5">
+                <Spinner className="h-7 w-7 text-foreground" />
+                <p className="text-muted-foreground text-sm uppercase tracking-widest font-bold animate-pulse">Checking GitHub Credentials...</p>
               </div>
             ) : !session ? (
               /* GitHub SignIn Request Screen */
@@ -634,9 +634,9 @@ export default function Dashboard() {
                   <Github className="h-8 w-8 text-foreground" />
                   <AlertCircle className="h-4 w-4 text-red-500 absolute -top-1.5 -right-1.5" />
                 </div>
-                <div className="space-y-2">
-                  <h2 className="text-md font-bold uppercase tracking-tight text-foreground">GitHub Account Not Linked</h2>
-                  <p className="text-muted-foreground text-xs font-sans leading-relaxed">
+                <div className="space-y-3">
+                  <h2 className="text-lg font-bold uppercase tracking-tight text-foreground">GitHub Account Not Linked</h2>
+                  <p className="text-muted-foreground text-sm font-sans leading-relaxed">
                     To trigger pull request files analytics, review git logs, and perform repo sync operations, you must link your GitHub profile first.
                   </p>
                 </div>
@@ -659,36 +659,36 @@ export default function Dashboard() {
               </div>
             ) : (
               /* GitHub Connected Workspace Hub */
-              <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
                 {/* Left Side: Repos & Actions Menu */}
                 <div className="lg:col-span-1 space-y-6">
                   {/* Connected Profile */}
                   <Card className="border-border rounded-none bg-card/50">
-                    <CardHeader className="p-4 border-b border-border">
-                      <CardTitle className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">GitHub Profile</CardTitle>
+                    <CardHeader className="p-5 border-b border-border">
+                      <CardTitle className="text-xs uppercase font-bold text-muted-foreground tracking-wider">GitHub Profile</CardTitle>
                     </CardHeader>
-                    <CardContent className="p-4 flex items-center gap-3">
+                    <CardContent className="p-5 flex items-center gap-4">
                       {session.user.image ? (
-                        <img src={session.user.image} alt="Avatar" className="h-8 w-8 border border-border rounded-none shrink-0" />
+                        <img src={session.user.image} alt="Avatar" className="h-10 w-10 border border-border rounded-none shrink-0" />
                       ) : (
-                        <div className="h-8 w-8 border border-border bg-muted flex items-center justify-center text-xs shrink-0 font-bold">GH</div>
+                        <div className="h-10 w-10 border border-border bg-muted flex items-center justify-center text-xs shrink-0 font-bold">GH</div>
                       )}
                       <div className="min-w-0 flex-1">
-                        <p className="font-bold text-xs uppercase text-foreground leading-tight truncate">{session.user.name}</p>
-                        <p className="text-[9px] text-muted-foreground truncate leading-relaxed">{session.user.email}</p>
+                        <p className="font-bold text-sm uppercase text-foreground leading-tight truncate">{session.user.name}</p>
+                        <p className="text-xs text-muted-foreground truncate leading-relaxed mt-0.5">{session.user.email}</p>
                       </div>
                     </CardContent>
                   </Card>
 
                   {/* Active Repository Selector */}
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block px-1">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
                       Select Repository {isLoadingRepos && "(Loading...)"}
                     </label>
                     <select
                       value={selectedRepo}
                       onChange={(e) => setSelectedRepo(e.target.value)}
-                      className="w-full border border-border rounded-none bg-background text-xs font-mono p-3 focus-visible:outline-none focus-visible:border-foreground"
+                      className="w-full border border-border rounded-none bg-background text-sm font-sans p-3 focus-visible:outline-none focus-visible:border-foreground"
                       disabled={isLoadingRepos}
                     >
                       {githubRepos.length > 0 ? (
@@ -708,18 +708,18 @@ export default function Dashboard() {
                   </div>
 
                   {/* Subtabs Menu */}
-                  <nav className="flex flex-col space-y-1 font-mono text-xs uppercase">
+                  <nav className="flex flex-col space-y-1.5 font-sans text-xs uppercase">
                     {[
-                      { id: "pr", label: "PR & Issues", icon: <GitPullRequest className="h-3.5 w-3.5" /> },
-                      { id: "review", label: "Code Review", icon: <ShieldCheck className="h-3.5 w-3.5" /> },
-                      { id: "diff", label: "Diff Analysis", icon: <FileCode className="h-3.5 w-3.5" /> },
-                      { id: "ops", label: "Push & Pull", icon: <RefreshCw className="h-3.5 w-3.5" /> },
-                      { id: "analytics", label: "Analytics Board", icon: <BarChart2 className="h-3.5 w-3.5" /> }
+                      { id: "pr", label: "PR & Issues", icon: <GitPullRequest className="h-4 w-4" /> },
+                      { id: "review", label: "Code Review", icon: <ShieldCheck className="h-4 w-4" /> },
+                      { id: "diff", label: "Diff Analysis", icon: <FileCode className="h-4 w-4" /> },
+                      { id: "ops", label: "Push & Pull", icon: <RefreshCw className="h-4 w-4" /> },
+                      { id: "analytics", label: "Analytics Board", icon: <BarChart2 className="h-4 w-4" /> }
                     ].map((tab) => (
                       <button
                         key={tab.id}
                         onClick={() => setSelectedSubTab(tab.id as any)}
-                        className={`flex items-center gap-3 px-3 py-3 border text-left transition-all ${
+                        className={`flex items-center gap-3 px-4 py-3 border text-left transition-all ${
                           selectedSubTab === tab.id
                             ? "border-foreground bg-foreground text-background font-bold"
                             : "border-border hover:border-foreground bg-card/25"
@@ -734,47 +734,47 @@ export default function Dashboard() {
 
                 {/* Right Side: Active Workspace Console */}
                 <div className="lg:col-span-3">
-                  <Card className="border-border bg-card rounded-none h-full min-h-[550px] flex flex-col justify-between relative overflow-hidden">
-                    <CardHeader className="border-b border-border bg-muted/20 p-5 flex flex-row items-center justify-between gap-4">
+                  <Card className="border-border bg-card rounded-none h-full min-h-[600px] flex flex-col justify-between relative overflow-hidden">
+                    <CardHeader className="border-b border-border bg-muted/20 p-6 flex flex-row items-center justify-between gap-4">
                       <div>
-                        <CardTitle className="text-xs uppercase font-bold text-foreground">
+                        <CardTitle className="text-sm uppercase font-bold text-foreground">
                           {selectedSubTab === "pr" && "PR & Issue Lifecycle Manager"}
                           {selectedSubTab === "review" && "GitHub Review Auditor"}
                           {selectedSubTab === "diff" && "Git Diff Comparative Suite"}
                           {selectedSubTab === "ops" && "Remote Push & Sync Operations"}
                           {selectedSubTab === "analytics" && "Repository Activity Analytics"}
                         </CardTitle>
-                        <CardDescription className="text-[10px] text-muted-foreground font-sans mt-0.5">
+                        <CardDescription className="text-xs text-muted-foreground font-sans mt-1">
                           Active Target: <span className="font-mono text-foreground font-bold">{selectedRepo}</span>
                         </CardDescription>
                       </div>
-                      <Badge className="bg-foreground text-background rounded-none text-[8px] uppercase tracking-wider font-bold">
+                      <Badge className="bg-foreground text-background rounded-none text-xs uppercase tracking-wider font-bold px-3 py-1">
                         Connected
                       </Badge>
                     </CardHeader>
 
-                    <CardContent className="p-6 flex-1 overflow-y-auto space-y-6">
+                    <CardContent className="p-7 flex-1 overflow-y-auto space-y-7">
                       {/* TAB 1: PR & ISSUES */}
                       {selectedSubTab === "pr" && (
-                        <div className="space-y-6">
+                        <div className="space-y-7">
                           {/* Create Issue */}
-                          <div className="border border-border p-4 bg-muted/5 space-y-4">
-                            <h3 className="text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b border-border pb-2 text-foreground">
-                              <Info className="h-3.5 w-3.5" />
+                          <div className="border border-border p-6 bg-muted/5 space-y-5">
+                            <h3 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2.5 border-b border-border pb-3 text-foreground">
+                              <Info className="h-4 w-4" />
                               <span>createIssue()</span>
                             </h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                               <Input 
                                 placeholder="Issue Title" 
                                 value={issueTitle}
                                 onChange={(e) => setIssueTitle(e.target.value)}
-                                className="rounded-none border-border bg-background sm:col-span-1 text-xs"
+                                className="rounded-none border-border bg-background sm:col-span-1 text-sm"
                               />
                               <Input 
                                 placeholder="Issue Body / Description" 
                                 value={issueBody}
                                 onChange={(e) => setIssueBody(e.target.value)}
-                                className="rounded-none border-border bg-background sm:col-span-2 text-xs"
+                                className="rounded-none border-border bg-background sm:col-span-2 text-sm"
                               />
                             </div>
                             <Button 
@@ -787,30 +787,30 @@ export default function Dashboard() {
                                 setIssueTitle("");
                                 setIssueBody("");
                               }}
-                              className="rounded-none text-[10px] uppercase font-mono tracking-wider bg-foreground text-background hover:bg-neutral-800"
+                              className="rounded-none text-xs uppercase font-sans tracking-wider bg-foreground text-background hover:bg-neutral-800"
                             >
                               Execute createIssue()
                             </Button>
                           </div>
 
                           {/* Create PR */}
-                          <div className="border border-border p-4 bg-muted/5 space-y-4">
-                            <h3 className="text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b border-border pb-2 text-foreground">
-                              <GitPullRequest className="h-3.5 w-3.5" />
+                          <div className="border border-border p-6 bg-muted/5 space-y-5">
+                            <h3 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2.5 border-b border-border pb-3 text-foreground">
+                              <GitPullRequest className="h-4 w-4" />
                               <span>createPullRequest()</span>
                             </h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                               <Input 
                                 placeholder="PR Title" 
                                 value={prTitle}
                                 onChange={(e) => setPrTitle(e.target.value)}
-                                className="rounded-none border-border bg-background sm:col-span-2 text-xs"
+                                className="rounded-none border-border bg-background sm:col-span-2 text-sm"
                               />
                               <Input 
                                 placeholder="From Branch" 
                                 value={prBranch}
                                 onChange={(e) => setPrBranch(e.target.value)}
-                                className="rounded-none border-border bg-background sm:col-span-1 text-xs"
+                                className="rounded-none border-border bg-background sm:col-span-1 text-sm"
                               />
                             </div>
                             <Button 
@@ -822,48 +822,48 @@ export default function Dashboard() {
                                 toast.success(`[GitHub] createPullRequest() status: 200 OK. PR #45 opened from "${prBranch}" to "main".`);
                                 setPrTitle("");
                               }}
-                              className="rounded-none text-[10px] uppercase font-mono tracking-wider bg-foreground text-background hover:bg-neutral-800"
+                              className="rounded-none text-xs uppercase font-sans tracking-wider bg-foreground text-background hover:bg-neutral-800"
                             >
                               Execute createPullRequest()
                             </Button>
                           </div>
 
                           {/* Merge & Release Actions */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="border border-border p-4 bg-muted/5 space-y-4">
-                              <h3 className="text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b border-border pb-2 text-foreground">
-                                <GitMerge className="h-3.5 w-3.5" />
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div className="border border-border p-6 bg-muted/5 space-y-5">
+                              <h3 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2.5 border-b border-border pb-3 text-foreground">
+                                <GitMerge className="h-4 w-4" />
                                 <span>mergePullRequest()</span>
                               </h3>
-                              <p className="text-[10px] text-muted-foreground font-sans leading-relaxed">
+                              <p className="text-sm text-muted-foreground font-sans leading-relaxed">
                                 Merges the active PR #45 into branch main, committing all generated code.
                               </p>
                               <Button 
                                 onClick={() => {
                                   toast.success("[GitHub] mergePullRequest() status: 200 SUCCESS. Commit merged: d3c4b9a into main.");
                                 }}
-                                className="rounded-none text-[10px] uppercase font-mono tracking-wider bg-foreground text-background hover:bg-neutral-800"
+                                className="rounded-none text-xs uppercase font-sans tracking-wider bg-foreground text-background hover:bg-neutral-800"
                               >
                                 Execute mergePullRequest()
                               </Button>
                             </div>
 
-                            <div className="border border-border p-4 bg-muted/5 space-y-4">
-                              <h3 className="text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b border-border pb-2 text-foreground">
-                                <Tag className="h-3.5 w-3.5" />
+                            <div className="border border-border p-6 bg-muted/5 space-y-5">
+                              <h3 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2.5 border-b border-border pb-3 text-foreground">
+                                <Tag className="h-4 w-4" />
                                 <span>createRelease()</span>
                               </h3>
-                              <div className="flex items-center gap-2">
+                              <div className="flex items-center gap-3">
                                 <Input 
                                   value={releaseTag}
                                   onChange={(e) => setReleaseTag(e.target.value)}
-                                  className="rounded-none border-border bg-background text-xs max-w-[120px]"
+                                  className="rounded-none border-border bg-background text-sm max-w-[140px]"
                                 />
                                 <Button 
                                   onClick={() => {
                                     toast.success(`[GitHub] createRelease() status: 201 Created. Tag ${releaseTag} published to production.`);
                                   }}
-                                  className="rounded-none text-[10px] uppercase font-mono tracking-wider bg-foreground text-background hover:bg-neutral-800"
+                                  className="rounded-none text-xs uppercase font-sans tracking-wider bg-foreground text-background hover:bg-neutral-800"
                                 >
                                   Execute createRelease()
                                 </Button>
@@ -875,25 +875,25 @@ export default function Dashboard() {
 
                       {/* TAB 2: CODE REVIEW FLOW */}
                       {selectedSubTab === "review" && (
-                        <div className="space-y-6">
-                          <div className="border border-border p-4 bg-muted/5 space-y-4">
-                            <div className="flex items-center justify-between border-b border-border pb-2">
-                              <h3 className="text-xs font-bold uppercase tracking-wider flex items-center gap-2 text-foreground">
-                                <ShieldCheck className="h-3.5 w-3.5" />
+                        <div className="space-y-7">
+                          <div className="border border-border p-6 bg-muted/5 space-y-5">
+                            <div className="flex items-center justify-between border-b border-border pb-3">
+                              <h3 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2.5 text-foreground">
+                                <ShieldCheck className="h-4 w-4" />
                                 <span>Code Review Audit Flow</span>
                               </h3>
-                              <span className="text-[10px] font-mono text-muted-foreground">listPullRequests() & getPullRequestFiles()</span>
+                              <span className="text-xs font-mono text-muted-foreground">listPullRequests() & getPullRequestFiles()</span>
                             </div>
 
-                            <div className="space-y-4">
-                              <div className="space-y-1.5">
-                                <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">
+                            <div className="space-y-5">
+                              <div className="space-y-2">
+                                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
                                   Select Open Pull Request {isLoadingPulls && "(Loading...)"}
                                 </label>
                                 <select
                                   value={selectedPrNumber || ""}
                                   onChange={(e) => setSelectedPrNumber(Number(e.target.value) || null)}
-                                  className="w-full border border-border rounded-none bg-background text-xs font-mono p-3 focus-visible:outline-none focus-visible:border-foreground"
+                                  className="w-full border border-border rounded-none bg-background text-sm font-sans p-3 focus-visible:outline-none focus-visible:border-foreground"
                                   disabled={isLoadingPulls || activePulls.length === 0}
                                 >
                                   {activePulls.length > 0 ? (
@@ -908,16 +908,16 @@ export default function Dashboard() {
                                 </select>
                               </div>
 
-                              <div className="pl-2 text-[10px] space-y-1.5 text-muted-foreground border-l border-border/80">
-                                <p className="font-bold uppercase tracking-wider text-foreground">// Changed Files (getPullRequestFiles()):</p>
+                              <div className="pl-3 text-xs space-y-2 text-muted-foreground border-l-2 border-border/80">
+                                <p className="font-bold uppercase tracking-wider text-foreground text-[11px]">// Changed Files (getPullRequestFiles()):</p>
                                 {isLoadingFiles ? (
                                   <p className="animate-pulse">Loading modified files list...</p>
                                 ) : prFiles.length > 0 ? (
                                   prFiles.map((file, i) => (
-                                    <p key={i} className="flex items-center gap-1.5 truncate">
-                                      <FileCode className="h-3.5 w-3.5 text-foreground shrink-0" />
+                                    <p key={i} className="flex items-center gap-2 truncate">
+                                      <FileCode className="h-4 w-4 text-foreground shrink-0" />
                                       <span className="truncate">{file.filepath}</span>
-                                      <span className="text-[8px] px-1 bg-muted uppercase shrink-0 font-sans">{file.status}</span>
+                                      <span className="text-[10px] px-1.5 bg-muted uppercase shrink-0 font-sans">{file.status}</span>
                                       {file.additions !== undefined && <span className="text-emerald-500 shrink-0 font-bold">+{file.additions}</span>}
                                       {file.deletions !== undefined && <span className="text-red-500 shrink-0 font-bold">-{file.deletions}</span>}
                                     </p>
@@ -930,11 +930,11 @@ export default function Dashboard() {
                           </div>
 
                           {/* AI RAG Trigger Card */}
-                          <div className="border border-border p-4 bg-muted/5 space-y-3">
-                            <h3 className="text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b border-border pb-2 text-foreground">
+                          <div className="border border-border p-6 bg-muted/5 space-y-4">
+                            <h3 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2.5 border-b border-border pb-3 text-foreground">
                               <span>Generate AI Review with RAG (Pinecone & Gemini)</span>
                             </h3>
-                            <p className="text-[10px] text-muted-foreground leading-relaxed font-sans">
+                            <p className="text-sm text-muted-foreground leading-relaxed font-sans">
                               Triggering this audit will fetch the PR's unified diff from GitHub, chunk and vector-index it inside Pinecone, perform retrieval query matches, analyze the code with Gemini, and submit inline comments back to GitHub.
                             </p>
                             <div className="pt-1">
@@ -971,24 +971,24 @@ export default function Dashboard() {
                                   }
                                 }}
                                 disabled={isGeneratingReview || !selectedPrNumber}
-                                className="rounded-none w-full text-[10px] uppercase font-mono tracking-wider bg-foreground text-background hover:bg-neutral-800 py-5"
+                                className="rounded-none w-full text-xs uppercase font-sans tracking-wider bg-foreground text-background hover:bg-neutral-800 py-5"
                               >
                                 {isGeneratingReview ? "Running RAG & AI Audit..." : "Run AI RAG Audit & Submit"}
                               </Button>
                             </div>
                           </div>
 
-                          <div className="border border-border p-4 bg-muted/5 space-y-4">
-                            <h3 className="text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b border-border pb-2 text-foreground">
+                          <div className="border border-border p-6 bg-muted/5 space-y-5">
+                            <h3 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2.5 border-b border-border pb-3 text-foreground">
                               <span>Manual Review & Sign-Off override</span>
                             </h3>
-                            <div className="space-y-3">
+                            <div className="space-y-4">
                               <Textarea 
                                 placeholder="Enter review comments / audit details..."
                                 value={reviewComment}
                                 onChange={(e) => setReviewComment(e.target.value)}
-                                className="rounded-none border-border bg-background text-xs font-mono"
-                                rows={2}
+                                className="rounded-none border-border bg-background text-sm font-sans"
+                                rows={3}
                               />
                               <div className="flex flex-wrap gap-2">
                                 <Button 
@@ -1179,37 +1179,37 @@ index 8fd34b9..c298fe2 100644
 
                       {/* TAB 5: ANALYTICS */}
                       {selectedSubTab === "analytics" && (
-                        <div className="space-y-6">
+                        <div className="space-y-7">
                           {/* Top row stats: getCloneStats() and getViewStats() */}
-                          <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                            <div className="border border-border p-4 bg-muted/5 rounded-none text-center">
-                              <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold">getCloneStats() Clones</p>
-                              <p className="text-2xl font-black text-foreground mt-1">284</p>
-                              <span className="text-[8px] text-emerald-500 font-bold font-mono">14-Day Traffic</span>
+                          <div className="grid grid-cols-1 sm:grid-cols-4 gap-5">
+                            <div className="border border-border p-5 bg-muted/5 rounded-none text-center">
+                              <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold">getCloneStats() Clones</p>
+                              <p className="text-3xl font-black text-foreground mt-2">284</p>
+                              <span className="text-xs text-emerald-500 font-bold font-sans mt-1 block">14-Day Traffic</span>
                             </div>
-                            <div className="border border-border p-4 bg-muted/5 rounded-none text-center">
-                              <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold">getCloneStats() Cloners</p>
-                              <p className="text-2xl font-black text-foreground mt-1">94</p>
-                              <span className="text-[8px] text-muted-foreground font-bold font-mono">Unique Profiles</span>
+                            <div className="border border-border p-5 bg-muted/5 rounded-none text-center">
+                              <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold">getCloneStats() Cloners</p>
+                              <p className="text-3xl font-black text-foreground mt-2">94</p>
+                              <span className="text-xs text-muted-foreground font-bold font-sans mt-1 block">Unique Profiles</span>
                             </div>
-                            <div className="border border-border p-4 bg-muted/5 rounded-none text-center">
-                              <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold">getViewStats() Pageviews</p>
-                              <p className="text-2xl font-black text-foreground mt-1">1,294</p>
-                              <span className="text-[8px] text-emerald-500 font-bold font-mono">Views (14 Days)</span>
+                            <div className="border border-border p-5 bg-muted/5 rounded-none text-center">
+                              <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold">getViewStats() Pageviews</p>
+                              <p className="text-3xl font-black text-foreground mt-2">1,294</p>
+                              <span className="text-xs text-emerald-500 font-bold font-sans mt-1 block">Views (14 Days)</span>
                             </div>
-                            <div className="border border-border p-4 bg-muted/5 rounded-none text-center">
-                              <p className="text-[9px] uppercase tracking-wider text-muted-foreground font-bold">getViewStats() Visitors</p>
-                              <p className="text-2xl font-black text-foreground mt-1">394</p>
-                              <span className="text-[8px] text-muted-foreground font-bold font-mono">Unique Hosts</span>
+                            <div className="border border-border p-5 bg-muted/5 rounded-none text-center">
+                              <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold">getViewStats() Visitors</p>
+                              <p className="text-3xl font-black text-foreground mt-2">394</p>
+                              <span className="text-xs text-muted-foreground font-bold font-sans mt-1 block">Unique Hosts</span>
                             </div>
                           </div>
 
                           {/* getContributionStats() and getCodeFrequency() */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             {/* Commits Bar Chart */}
-                            <div className="border border-border p-4 bg-muted/5 space-y-3">
-                              <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                                <BarChart2 className="h-3.5 w-3.5" />
+                            <div className="border border-border p-6 bg-muted/5 space-y-4">
+                              <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                                <BarChart2 className="h-4 w-4" />
                                 <span>getContributionStats() - Commits (Last 7 Days)</span>
                               </h4>
                               <div className="h-32 flex items-end gap-2 pt-4">
@@ -1227,14 +1227,14 @@ index 8fd34b9..c298fe2 100644
                             </div>
 
                             {/* Code Frequency (Additions vs Deletions) */}
-                            <div className="border border-border p-4 bg-muted/5 space-y-3">
-                              <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                                <TrendingUp className="h-3.5 w-3.5" />
+                            <div className="border border-border p-6 bg-muted/5 space-y-4">
+                              <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                                <TrendingUp className="h-4 w-4" />
                                 <span>getCodeFrequency() - Volume (Last 14 Days)</span>
                               </h4>
                               <div className="space-y-4 pt-2">
-                                <div className="space-y-1">
-                                  <div className="flex justify-between text-[9px]">
+                                <div className="space-y-2">
+                                  <div className="flex justify-between text-xs">
                                     <span className="text-emerald-500 font-bold uppercase">Additions</span>
                                     <span>+12,482 lines</span>
                                   </div>
@@ -1242,8 +1242,8 @@ index 8fd34b9..c298fe2 100644
                                     <div className="bg-emerald-500 h-full w-[76%]" />
                                   </div>
                                 </div>
-                                <div className="space-y-1">
-                                  <div className="flex justify-between text-[9px]">
+                                <div className="space-y-2">
+                                  <div className="flex justify-between text-xs">
                                     <span className="text-red-500 font-bold uppercase">Deletions</span>
                                     <span>-3,921 lines</span>
                                   </div>
@@ -1256,9 +1256,9 @@ index 8fd34b9..c298fe2 100644
                           </div>
 
                           {/* getPunchCard() */}
-                          <div className="border border-border p-4 bg-muted/5 space-y-3">
-                            <h4 className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                              <Calendar className="h-3.5 w-3.5" />
+                          <div className="border border-border p-6 bg-muted/5 space-y-4">
+                            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                              <Calendar className="h-4 w-4" />
                               <span>getPunchCard() - Commit Frequency Density</span>
                             </h4>
                             <div className="overflow-x-auto pt-2">
@@ -1299,8 +1299,8 @@ index 8fd34b9..c298fe2 100644
                       )}
                     </CardContent>
 
-                    <CardFooter className="border-t border-border bg-muted/10 p-3 text-[9px] text-muted-foreground font-mono flex items-center gap-2">
-                      <Terminal className="h-3.5 w-3.5 text-muted-foreground" />
+                    <CardFooter className="border-t border-border bg-muted/10 p-4 text-xs text-muted-foreground font-sans flex items-center gap-2.5">
+                      <Terminal className="h-4 w-4 text-muted-foreground shrink-0" />
                       <span>Ready for git callbacks on selectedRepo. Listening to webhook payloads...</span>
                     </CardFooter>
                   </Card>
