@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { Spinner } from "~/components/ui/spinner";
 import { useLogout, useUser } from "~/hooks/api/auth";
 import { authClient } from "~/lib/auth-client";
+import { Badge } from "~/components/ui/badge";
 
 export default function Dashboard() {
   const utils = trpc.useUtils();
