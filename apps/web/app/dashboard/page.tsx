@@ -44,6 +44,35 @@ export default function Dashboard() {
   // GitHub Console Simulation States
   const [selectedRepo, setSelectedRepo] = useState("abhinavbist/velocity");
   const [selectedSubTab, setSelectedSubTab] = useState<"pr" | "review" | "diff" | "ops" | "analytics">("pr");
+
+  const [githubRepos, setGithubRepos] = useState<{ id: number; name: string; fullName: string; url: string; private: boolean }[]>([]);
+  const [isLoadingRepos, setIsLoadingRepos] = useState(false);
+
+  React.useEffect(() => {
+    if (session) {
+      setIsLoadingRepos(true);
+      fetch("/api/github/repos")
+        .then((res) => {
+          if (!res.ok) throw new Error("Failed to load repositories");
+          return res.json();
+        })
+        .then((data) => {
+          setGithubRepos(data);
+          if (data.length > 0) {
+            const exists = data.some((r: any) => r.fullName === selectedRepo);
+            if (!exists) {
+              setSelectedRepo(data[0].fullName);
+            }
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+        })
+        .finally(() => {
+          setIsLoadingRepos(false);
+        });
+    }
+  }, [session]);
   
   // Issue & PR Forms State
   const [issueTitle, setIssueTitle] = useState("");
@@ -419,15 +448,28 @@ export default function Dashboard() {
 
                   {/* Active Repository Selector */}
                   <div className="space-y-1.5">
-                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block px-1">Select Repository</label>
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block px-1">
+                      Select Repository {isLoadingRepos && "(Loading...)"}
+                    </label>
                     <select
                       value={selectedRepo}
                       onChange={(e) => setSelectedRepo(e.target.value)}
                       className="w-full border border-border rounded-none bg-background text-xs font-mono p-3 focus-visible:outline-none focus-visible:border-foreground"
+                      disabled={isLoadingRepos}
                     >
-                      <option value="abhinavbist/velocity">abhinavbist/velocity (Active)</option>
-                      <option value="abhinavbist/shipflow-agent">abhinavbist/shipflow-agent</option>
-                      <option value="abhinavbist/gemini-autocoder">abhinavbist/gemini-autocoder</option>
+                      {githubRepos.length > 0 ? (
+                        githubRepos.map((repo) => (
+                          <option key={repo.id} value={repo.fullName}>
+                            {repo.fullName} {repo.private ? "🔒" : "🌐"}
+                          </option>
+                        ))
+                      ) : (
+                        <>
+                          <option value="abhinavbist/velocity">abhinavbist/velocity (Mock)</option>
+                          <option value="abhinavbist/shipflow-agent">abhinavbist/shipflow-agent (Mock)</option>
+                          <option value="abhinavbist/gemini-autocoder">abhinavbist/gemini-autocoder (Mock)</option>
+                        </>
+                      )}
                     </select>
                   </div>
 
