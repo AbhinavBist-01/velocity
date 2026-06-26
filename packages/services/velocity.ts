@@ -588,6 +588,9 @@ export const featureRouter = router({
     const [feature] = await db.select().from(featuresTable).where(eq(featuresTable.id, featureId)).limit(1);
     if (!feature) throw new Error("Feature not found");
 
+    const [project] = await db.select().from(projectsTable).where(eq(projectsTable.id, feature.projectId)).limit(1);
+    if (!project) throw new Error("Project not found");
+
     // 1. Perform RAG pipeline: Chunking and Pinecone indexing
     const files = (pullRequest.diffData as any[]).map(file => ({
       filepath: file.filepath,
@@ -595,8 +598,9 @@ export const featureRouter = router({
       content: file.content || ""
     }));
 
-    const chunks = chunkPrFiles(1, files);
-    const namespace = buildPrNamespace(feature.projectId, 1);
+    const prNum = feature.prNumber || 1;
+    const chunks = chunkPrFiles(prNum, files);
+    const namespace = buildPrNamespace(project.githubRepo, prNum);
 
     let contextSnippets: string[] = [];
     if (chunks.length > 0) {

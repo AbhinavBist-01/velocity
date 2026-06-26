@@ -175,6 +175,9 @@ importers:
       '@repo/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@repo/services':
+        specifier: workspace:*
+        version: link:../../packages/services
       '@repo/trpc':
         specifier: workspace:*
         version: link:../../packages/trpc
