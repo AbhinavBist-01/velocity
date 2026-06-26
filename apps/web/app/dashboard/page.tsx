@@ -47,30 +47,40 @@ export default function Dashboard() {
 
   const [githubRepos, setGithubRepos] = useState<{ id: number; name: string; fullName: string; url: string; private: boolean }[]>([]);
   const [isLoadingRepos, setIsLoadingRepos] = useState(false);
+  
+  const [repoMethod, setRepoMethod] = useState<"select" | "create" | "manual">("select");
+  const [newRepoName, setNewRepoName] = useState("");
+  const [newRepoDesc, setNewRepoDesc] = useState("");
+  const [newRepoPrivate, setNewRepoPrivate] = useState(true);
+  const [isCreatingRepo, setIsCreatingRepo] = useState(false);
+
+  const fetchGithubRepos = () => {
+    setIsLoadingRepos(true);
+    fetch("/api/github/repos")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load repositories");
+        return res.json();
+      })
+      .then((data) => {
+        setGithubRepos(data);
+        if (data.length > 0) {
+          const exists = data.some((r: any) => r.fullName === selectedRepo);
+          if (!exists) {
+            setSelectedRepo(data[0].fullName);
+          }
+        }
+      })
+      .catch((err) => {
+        console.error(err);
+      })
+      .finally(() => {
+        setIsLoadingRepos(false);
+      });
+  };
 
   React.useEffect(() => {
     if (session) {
-      setIsLoadingRepos(true);
-      fetch("/api/github/repos")
-        .then((res) => {
-          if (!res.ok) throw new Error("Failed to load repositories");
-          return res.json();
-        })
-        .then((data) => {
-          setGithubRepos(data);
-          if (data.length > 0) {
-            const exists = data.some((r: any) => r.fullName === selectedRepo);
-            if (!exists) {
-              setSelectedRepo(data[0].fullName);
-            }
-          }
-        })
-        .catch((err) => {
-          console.error(err);
-        })
-        .finally(() => {
-          setIsLoadingRepos(false);
-        });
+      fetchGithubRepos();
     }
   }, [session]);
   
@@ -95,6 +105,8 @@ export default function Dashboard() {
       setName("");
       setDescription("");
       setRepo("");
+      setNewRepoName("");
+      setNewRepoDesc("");
       toast.success("Project created successfully!");
     },
     onError: (err) => {
@@ -107,16 +119,70 @@ export default function Dashboard() {
   const [description, setDescription] = useState("");
   const [repo, setRepo] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !description || !repo) {
-      toast.warning("Please fill out all fields.");
+    if (!name || !description) {
+      toast.warning("Please fill out name and description.");
       return;
+    }
+
+    let targetRepo = repo;
+
+    if (repoMethod === "select") {
+      if (!repo) {
+        toast.warning("Please select a repository.");
+        return;
       }
+      targetRepo = repo;
+    } else if (repoMethod === "create") {
+      if (!newRepoName) {
+        toast.warning("Please enter a name for the new repository.");
+        return;
+      }
+      setIsCreatingRepo(true);
+      try {
+        const createRes = await fetch("/api/github/repos/create", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            name: newRepoName,
+            description: newRepoDesc || description,
+            isPrivate: newRepoPrivate,
+          }),
+        });
+
+        if (!createRes.ok) {
+          const errData = await createRes.json();
+          throw new Error(errData.error || "Failed to create GitHub repository");
+        }
+
+        const newRepo = await createRes.json();
+        targetRepo = newRepo.fullName;
+        toast.success(`Repository ${newRepo.fullName} created on GitHub!`);
+        
+        // Refresh repo lists in background
+        fetchGithubRepos();
+      } catch (err: any) {
+        toast.error(`GitHub repo creation failed: ${err.message}`);
+        setIsCreatingRepo(false);
+        return;
+      } finally {
+        setIsCreatingRepo(false);
+      }
+    } else {
+      if (!repo) {
+        toast.warning("Please enter a repository path.");
+        return;
+      }
+      targetRepo = repo;
+    }
+
     createProjectMutation.mutate({
       name,
       description,
-      githubRepo: repo,
+      githubRepo: targetRepo,
     });
   };
 
@@ -269,18 +335,127 @@ export default function Dashboard() {
                         />
                       </div>
 
-                      <div className="space-y-2">
-                        <label htmlFor="repo" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">GitHub Repository</label>
-                        <div className="relative">
-                          <Github className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          <Input
-                            id="repo"
-                            placeholder="github.com/username/project-repo"
-                            value={repo}
-                            onChange={(e) => setRepo(e.target.value)}
-                            className="pl-10 rounded-none border-border bg-background focus:ring-0 focus:border-foreground text-sm py-5"
-                          />
-                        </div>
+                      <div className="space-y-3">
+                        <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">GitHub Repository Source</label>
+                        
+                        {session ? (
+                          <>
+                            {/* Tab Selectors */}
+                            <div className="grid grid-cols-3 gap-1 border border-border p-1 bg-muted/30">
+                              {(["select", "create", "manual"] as const).map((method) => (
+                                <button
+                                  key={method}
+                                  type="button"
+                                  onClick={() => {
+                                    setRepoMethod(method);
+                                    if (method === "select" && githubRepos.length > 0 && !repo) {
+                                      setRepo(githubRepos[0]?.fullName || "");
+                                    }
+                                  }}
+                                  className={`py-1.5 text-[9px] uppercase tracking-wider font-bold transition-all ${
+                                    repoMethod === method
+                                      ? "bg-foreground text-background"
+                                      : "text-muted-foreground hover:text-foreground"
+                                  }`}
+                                >
+                                  {method === "select" && "Select Synced"}
+                                  {method === "create" && "Create New"}
+                                  {method === "manual" && "Manual Link"}
+                                </button>
+                              ))}
+                            </div>
+
+                            {/* Conditional Inputs */}
+                            {repoMethod === "select" && (
+                              <div className="space-y-1">
+                                <select
+                                  value={repo}
+                                  onChange={(e) => setRepo(e.target.value)}
+                                  className="w-full border border-border bg-background text-xs font-mono p-3 focus-visible:outline-none focus-visible:border-foreground"
+                                >
+                                  {githubRepos.length > 0 ? (
+                                    githubRepos.map((r) => (
+                                      <option key={r.id} value={r.fullName}>
+                                        {r.fullName} {r.private ? "🔒" : "🌐"}
+                                      </option>
+                                    ))
+                                  ) : (
+                                    <option value="">No repositories found</option>
+                                  )}
+                                </select>
+                                <p className="text-[8px] text-muted-foreground font-sans mt-0.5 px-1">
+                                  Lists your GitHub repositories. Choose one to associate.
+                                </p>
+                              </div>
+                            )}
+
+                            {repoMethod === "create" && (
+                              <div className="space-y-3 p-3 border border-border bg-card/40">
+                                <div className="space-y-1">
+                                  <label htmlFor="newRepoName" className="text-[8px] font-bold uppercase tracking-wider text-muted-foreground block">New Repository Name</label>
+                                  <Input
+                                    id="newRepoName"
+                                    placeholder="my-new-awesome-project"
+                                    value={newRepoName}
+                                    onChange={(e) => setNewRepoName(e.target.value.replace(/[^a-zA-Z0-9-_]/g, "-"))}
+                                    className="rounded-none border-border bg-background text-xs py-3"
+                                  />
+                                </div>
+                                <div className="space-y-1">
+                                  <label htmlFor="newRepoDesc" className="text-[8px] font-bold uppercase tracking-wider text-muted-foreground block">Description (Optional)</label>
+                                  <Input
+                                    id="newRepoDesc"
+                                    placeholder="Repository description..."
+                                    value={newRepoDesc}
+                                    onChange={(e) => setNewRepoDesc(e.target.value)}
+                                    className="rounded-none border-border bg-background text-xs py-3"
+                                  />
+                                </div>
+                                <div className="flex items-center gap-2 pt-1">
+                                  <input
+                                    type="checkbox"
+                                    id="newRepoPrivate"
+                                    checked={newRepoPrivate}
+                                    onChange={(e) => setNewRepoPrivate(e.target.checked)}
+                                    className="accent-foreground size-3.5 rounded-none border border-border cursor-pointer"
+                                  />
+                                  <label htmlFor="newRepoPrivate" className="text-[9px] uppercase tracking-wider font-bold text-muted-foreground selection:bg-transparent cursor-pointer">
+                                    Private Repository (Recommended)
+                                  </label>
+                                </div>
+                              </div>
+                            )}
+
+                            {repoMethod === "manual" && (
+                              <div className="relative">
+                                <Github className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input
+                                  id="repo"
+                                  placeholder="username/project-repo"
+                                  value={repo}
+                                  onChange={(e) => setRepo(e.target.value)}
+                                  className="pl-10 rounded-none border-border bg-background focus:ring-0 focus:border-foreground text-sm py-5"
+                                />
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <div className="space-y-2">
+                            <div className="relative">
+                              <Github className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                              <Input
+                                  id="repo"
+                                  placeholder="username/project-repo"
+                                  value={repo}
+                                  onChange={(e) => setRepo(e.target.value)}
+                                  className="pl-10 rounded-none border-border bg-background focus:ring-0 focus:border-foreground text-sm py-5"
+                              />
+                            </div>
+                            <p className="text-[9px] text-muted-foreground font-sans leading-relaxed">
+                              💡 Link your GitHub account in the **GitHub Developer Deck** sidebar tab to select synced repositories or create them directly.
+                            </p>
+                          </div>
+                        )}
                       </div>
                     </div>
 
@@ -295,10 +470,12 @@ export default function Dashboard() {
                       </Button>
                       <Button
                         type="submit"
-                        disabled={createProjectMutation.isPending}
+                        disabled={createProjectMutation.isPending || isCreatingRepo}
                         className="rounded-none font-mono text-xs uppercase tracking-widest bg-foreground text-background hover:bg-neutral-800"
                       >
-                        {createProjectMutation.isPending ? "Creating..." : "Create Project"}
+                        {createProjectMutation.isPending || isCreatingRepo 
+                          ? (isCreatingRepo ? "Creating Repo..." : "Creating Project...") 
+                          : "Create Project"}
                       </Button>
                     </DialogFooter>
                   </form>
