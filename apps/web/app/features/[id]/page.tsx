@@ -414,16 +414,16 @@ export default function FeaturePipeline() {
       <div className="space-y-8 font-sans text-sm text-foreground/90 select-text hover-blur-group">
         {mainTitle && (
           <div className="border-b border-border pb-4 mb-6">
-            <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest">// Product Specs Document</span>
-            <h3 className="text-xl font-bold uppercase tracking-tight text-foreground mt-1">{mainTitle}</h3>
+            <span className="text-xs font-mono text-muted-foreground uppercase tracking-widest">// Product Specs Document</span>
+            <h3 className="text-2xl font-bold uppercase tracking-tight text-foreground mt-1">{mainTitle}</h3>
           </div>
         )}
 
         {/* Highlight Section: Problem Statement */}
         {sections.filter(s => s.title.toLowerCase().includes("problem") || s.title.toLowerCase().includes("statement") || s.title.toLowerCase().includes("intake")).map(sec => (
           <div key={sec.title} className="p-4 border-l-2 border-foreground bg-foreground/[0.02] hover-blur-item transition-all duration-300">
-            <h4 className="text-xs uppercase font-mono font-bold tracking-wider text-muted-foreground mb-2">// {sec.title}</h4>
-            <p className="leading-relaxed text-foreground/80 font-sans">{renderBoldText(sec.content.join(" ").trim().replace(/^[\*\-\+]\s*/, ""))}</p>
+            <h4 className="text-sm uppercase font-mono font-bold tracking-wider text-muted-foreground mb-2">// {sec.title}</h4>
+            <p className="leading-relaxed text-foreground/80 font-sans text-base">{renderBoldText(sec.content.join(" ").trim().replace(/^[\*\-\+]\s*/, ""))}</p>
           </div>
         ))}
 
@@ -436,13 +436,13 @@ export default function FeaturePipeline() {
               return (
                 <div key={sec.title} className="p-5 border border-border bg-card/40 space-y-4 hover-blur-item transition-all duration-300">
                   <div className="flex items-center gap-2 border-b border-border/50 pb-2">
-                    <FileText className="h-4 w-4 text-foreground/75" />
-                    <h4 className="font-bold text-xs uppercase tracking-wider">{sec.title}</h4>
+                    <FileText className="h-4.5 w-4.5 text-foreground/75" />
+                    <h4 className="font-bold text-sm uppercase tracking-wider">{sec.title}</h4>
                   </div>
                   <ul className="space-y-2.5">
                     {points.map((p, idx) => (
-                      <li key={idx} className="flex items-start gap-2.5 leading-relaxed text-xs text-foreground/80">
-                        <Check className="h-3.5 w-3.5 text-foreground shrink-0 mt-0.5" />
+                      <li key={idx} className="flex items-start gap-2.5 leading-relaxed text-sm text-foreground/80">
+                        <Check className="h-4 w-4 text-foreground shrink-0 mt-0.5" />
                         <span>{renderBoldText(p)}</span>
                       </li>
                     ))}
@@ -456,13 +456,13 @@ export default function FeaturePipeline() {
         {sections.some(s => s.isTechnical) && (
           <div className="border border-border p-4 bg-muted/10 hover-blur-item transition-all duration-300">
             <details className="group">
-              <summary className="flex items-center justify-between cursor-pointer font-mono text-xs uppercase tracking-wider text-muted-foreground hover:text-foreground">
+              <summary className="flex items-center justify-between cursor-pointer font-mono text-sm uppercase tracking-wider text-muted-foreground hover:text-foreground">
                 <div className="flex items-center gap-2">
-                  <Terminal className="h-4 w-4" />
+                  <Terminal className="h-4.5 w-4.5" />
                   <span>Technical System Specifications & Dependencies</span>
                 </div>
                 <span className="transition-transform group-open:rotate-90">
-                  <ChevronRight className="h-4 w-4" />
+                  <ChevronRight className="h-4.5 w-4.5" />
                 </span>
               </summary>
               <div className="mt-4 pt-4 border-t border-border/60 space-y-4">
@@ -470,8 +470,8 @@ export default function FeaturePipeline() {
                   .filter(s => s.isTechnical)
                   .map(sec => (
                     <div key={sec.title} className="space-y-2">
-                      <h5 className="font-bold text-xs uppercase font-mono tracking-wide text-foreground">{sec.title}</h5>
-                      <div className="font-mono text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap pl-3 border-l border-border/60">
+                      <h5 className="font-bold text-sm uppercase font-mono tracking-wide text-foreground">{sec.title}</h5>
+                      <div className="font-mono text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap pl-3 border-l border-border/60">
                         {sec.content.join("\n").trim()}
                       </div>
                     </div>
