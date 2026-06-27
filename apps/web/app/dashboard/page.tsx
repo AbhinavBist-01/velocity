@@ -4,12 +4,11 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { trpc } from "~/trpc/client";
 import { 
-  Plus, Github, ArrowRight, Kanban, Clock, Terminal, ChevronRight, ChevronLeft, LogOut,
-  GitPullRequest, GitMerge, FileCode, CheckCircle, Tag, GitCommit, GitBranch, RefreshCw, 
-  BarChart2, TrendingUp, Users, Calendar, AlertCircle, Edit, Trash2, ShieldCheck, Info
+  Plus, Github, ArrowRight, Kanban, Terminal, ChevronRight, ChevronLeft, LogOut,
+  GitPullRequest, GitMerge, FileCode, Tag, GitCommit, GitBranch, RefreshCw, 
+  BarChart2, TrendingUp, Calendar, AlertCircle, ShieldCheck, Info
 } from "lucide-react";
 import { Button } from "~/components/ui/button";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "~/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "~/components/ui/dialog";
 import { Input } from "~/components/ui/input";
 import { Textarea } from "~/components/ui/textarea";
@@ -19,6 +18,15 @@ import { useLogout, useUser } from "~/hooks/api/auth";
 import { authClient } from "~/lib/auth-client";
 import { Badge } from "~/components/ui/badge";
 
+/* ─────────────────────────────────────────────────────────────────────────
+   Shared label style — consistent with landing page section labels
+───────────────────────────────────────────────────────────────────────── */
+const LABEL_CLS = "text-[10px] font-mono font-bold uppercase tracking-[0.12em] text-muted-foreground";
+const PANEL_CLS = "border border-foreground/10 bg-foreground/[0.02] p-5 space-y-4";
+const PANEL_HDR = "text-[11px] font-mono font-bold uppercase tracking-wider flex items-center gap-2 border-b border-foreground/10 pb-3 text-foreground";
+const BTN_MONO  = "rounded-none font-mono text-[10px] uppercase tracking-widest bg-foreground text-background hover:bg-foreground/85 border border-foreground transition-all";
+const BTN_GHOST = "rounded-none font-mono text-[10px] uppercase tracking-widest border border-foreground/20 hover:border-foreground text-muted-foreground hover:text-foreground transition-all";
+
 export default function Dashboard() {
   const utils = trpc.useUtils();
   const { user } = useUser();
@@ -27,9 +35,7 @@ export default function Dashboard() {
 
   React.useEffect(() => {
     const saved = localStorage.getItem("sidebar-collapsed");
-    if (saved === "true") {
-      setIsCollapsed(true);
-    }
+    if (saved === "true") setIsCollapsed(true);
   }, []);
 
   const toggleSidebar = () => {
@@ -41,13 +47,11 @@ export default function Dashboard() {
   const { data: session, isPending: isSessionPending } = authClient.useSession();
   const [activeTab, setActiveTab] = useState<"projects" | "github">("projects");
 
-  // GitHub Console Simulation States
+  // GitHub Console State
   const [selectedRepo, setSelectedRepo] = useState("abhinavbist/velocity");
   const [selectedSubTab, setSelectedSubTab] = useState<"pr" | "review" | "diff" | "ops" | "analytics">("pr");
-
   const [githubRepos, setGithubRepos] = useState<{ id: number; name: string; fullName: string; url: string; private: boolean }[]>([]);
   const [isLoadingRepos, setIsLoadingRepos] = useState(false);
-  
   const [repoMethod, setRepoMethod] = useState<"select" | "create" | "manual">("select");
   const [newRepoName, setNewRepoName] = useState("");
   const [newRepoDesc, setNewRepoDesc] = useState("");
@@ -57,32 +61,19 @@ export default function Dashboard() {
   const fetchGithubRepos = () => {
     setIsLoadingRepos(true);
     fetch("/api/github/repos")
-      .then((res) => {
-        if (!res.ok) throw new Error("Failed to load repositories");
-        return res.json();
-      })
-      .then((data) => {
+      .then(res => { if (!res.ok) throw new Error("Failed to load repositories"); return res.json(); })
+      .then(data => {
         setGithubRepos(data);
         if (data.length > 0) {
           const exists = data.some((r: any) => r.fullName === selectedRepo);
-          if (!exists) {
-            setSelectedRepo(data[0].fullName);
-          }
+          if (!exists) setSelectedRepo(data[0].fullName);
         }
       })
-      .catch((err) => {
-        console.error(err);
-      })
-      .finally(() => {
-        setIsLoadingRepos(false);
-      });
+      .catch(console.error)
+      .finally(() => setIsLoadingRepos(false));
   };
 
-  React.useEffect(() => {
-    if (session) {
-      fetchGithubRepos();
-    }
-  }, [session]);
+  React.useEffect(() => { if (session) fetchGithubRepos(); }, [session]);
 
   const [activePulls, setActivePulls] = useState<{ id: number; number: number; title: string; state: string; branch: string; sha: string; user: string; url: string }[]>([]);
   const [isLoadingPulls, setIsLoadingPulls] = useState(false);
@@ -95,26 +86,13 @@ export default function Dashboard() {
     if (session && selectedRepo && activeTab === "github") {
       setIsLoadingPulls(true);
       fetch(`/api/github/pulls?repo=${encodeURIComponent(selectedRepo)}`)
-        .then((res) => {
-          if (!res.ok) throw new Error("Failed to load pull requests");
-          return res.json();
-        })
-        .then((data) => {
+        .then(res => { if (!res.ok) throw new Error("Failed to load pull requests"); return res.json(); })
+        .then(data => {
           setActivePulls(data);
-          if (data.length > 0) {
-            setSelectedPrNumber(data[0].number);
-          } else {
-            setSelectedPrNumber(null);
-          }
+          setSelectedPrNumber(data.length > 0 ? data[0].number : null);
         })
-        .catch((err) => {
-          console.error(err);
-          setActivePulls([]);
-          setSelectedPrNumber(null);
-        })
-        .finally(() => {
-          setIsLoadingPulls(false);
-        });
+        .catch(err => { console.error(err); setActivePulls([]); setSelectedPrNumber(null); })
+        .finally(() => setIsLoadingPulls(false));
     }
   }, [session, selectedRepo, activeTab]);
 
@@ -122,26 +100,16 @@ export default function Dashboard() {
     if (session && selectedRepo && selectedPrNumber && activeTab === "github") {
       setIsLoadingFiles(true);
       fetch(`/api/github/pulls/files?repo=${encodeURIComponent(selectedRepo)}&number=${selectedPrNumber}`)
-        .then((res) => {
-          if (!res.ok) throw new Error("Failed to load PR files");
-          return res.json();
-        })
-        .then((data) => {
-          setPrFiles(data);
-        })
-        .catch((err) => {
-          console.error(err);
-          setPrFiles([]);
-        })
-        .finally(() => {
-          setIsLoadingFiles(false);
-        });
+        .then(res => { if (!res.ok) throw new Error("Failed to load PR files"); return res.json(); })
+        .then(data => setPrFiles(data))
+        .catch(err => { console.error(err); setPrFiles([]); })
+        .finally(() => setIsLoadingFiles(false));
     } else {
       setPrFiles([]);
     }
   }, [session, selectedRepo, selectedPrNumber, activeTab]);
-  
-  // Issue & PR Forms State
+
+  // Form states
   const [issueTitle, setIssueTitle] = useState("");
   const [issueBody, setIssueBody] = useState("");
   const [prTitle, setPrTitle] = useState("");
@@ -149,8 +117,6 @@ export default function Dashboard() {
   const [releaseTag, setReleaseTag] = useState("v1.3.0");
   const [reviewComment, setReviewComment] = useState("");
   const [commitMessage, setCommitMessage] = useState("");
-  
-  // Diff Compare Branches State
   const [compareBase, setCompareBase] = useState("main");
   const [compareHead, setCompareHead] = useState("feature/home-page-redesign");
 
@@ -159,16 +125,11 @@ export default function Dashboard() {
     onSuccess: () => {
       utils.velocity.getProjects.invalidate();
       setIsCreateOpen(false);
-      setName("");
-      setDescription("");
-      setRepo("");
-      setNewRepoName("");
-      setNewRepoDesc("");
+      setName(""); setDescription(""); setRepo("");
+      setNewRepoName(""); setNewRepoDesc("");
       toast.success("Project created successfully!");
     },
-    onError: (err) => {
-      toast.error(`Error: ${err.message}`);
-    }
+    onError: (err) => { toast.error(`Error: ${err.message}`); }
   });
 
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -178,227 +139,216 @@ export default function Dashboard() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name || !description) {
-      toast.warning("Please fill out name and description.");
-      return;
-    }
+    if (!name || !description) { toast.warning("Please fill out name and description."); return; }
 
     let targetRepo = repo;
 
     if (repoMethod === "select") {
-      if (!repo) {
-        toast.warning("Please select a repository.");
-        return;
-      }
+      if (!repo) { toast.warning("Please select a repository."); return; }
       targetRepo = repo;
     } else if (repoMethod === "create") {
-      if (!newRepoName) {
-        toast.warning("Please enter a name for the new repository.");
-        return;
-      }
+      if (!newRepoName) { toast.warning("Please enter a name for the new repository."); return; }
       setIsCreatingRepo(true);
       try {
         const createRes = await fetch("/api/github/repos/create", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            name: newRepoName,
-            description: newRepoDesc || description,
-            isPrivate: newRepoPrivate,
-          }),
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name: newRepoName, description: newRepoDesc || description, isPrivate: newRepoPrivate }),
         });
-
-        if (!createRes.ok) {
-          const errData = await createRes.json();
-          throw new Error(errData.error || "Failed to create GitHub repository");
-        }
-
+        if (!createRes.ok) { const errData = await createRes.json(); throw new Error(errData.error || "Failed to create GitHub repository"); }
         const newRepo = await createRes.json();
         targetRepo = newRepo.fullName;
         toast.success(`Repository ${newRepo.fullName} created on GitHub!`);
-        
-        // Refresh repo lists in background
         fetchGithubRepos();
       } catch (err: any) {
         toast.error(`GitHub repo creation failed: ${err.message}`);
         setIsCreatingRepo(false);
         return;
-      } finally {
-        setIsCreatingRepo(false);
-      }
+      } finally { setIsCreatingRepo(false); }
     } else {
-      if (!repo) {
-        toast.warning("Please enter a repository path.");
-        return;
-      }
+      if (!repo) { toast.warning("Please enter a repository path."); return; }
       targetRepo = repo;
     }
 
-    createProjectMutation.mutate({
-      name,
-      description,
-      githubRepo: targetRepo,
-    });
+    createProjectMutation.mutate({ name, description, githubRepo: targetRepo });
+  };
+
+  /* ─── Sidebar nav items ─────────────────────────────────── */
+  const navItems = [
+    { id: "projects" as const, label: "Projects", icon: <Kanban className="h-4 w-4 shrink-0" /> },
+    { id: "github"   as const, label: "GitHub Hub", icon: <Github className="h-4 w-4 shrink-0" /> },
+  ];
+
+  const subTabs = [
+    { id: "pr"        as const, label: "PR & Issues",       icon: <GitPullRequest className="h-3.5 w-3.5" /> },
+    { id: "review"    as const, label: "Code Review",       icon: <ShieldCheck    className="h-3.5 w-3.5" /> },
+    { id: "diff"      as const, label: "Diff Analysis",     icon: <FileCode       className="h-3.5 w-3.5" /> },
+    { id: "ops"       as const, label: "Push & Pull",       icon: <RefreshCw      className="h-3.5 w-3.5" /> },
+    { id: "analytics" as const, label: "Analytics",         icon: <BarChart2      className="h-3.5 w-3.5" /> },
+  ];
+
+  const consoleTitles: Record<string, string> = {
+    pr: "PR & Issue Lifecycle",
+    review: "GitHub Review Auditor",
+    diff: "Git Diff Comparative Suite",
+    ops: "Remote Push & Sync",
+    analytics: "Repository Analytics",
   };
 
   return (
-    <div className="flex min-h-screen bg-background text-foreground font-sans bg-grid-dots relative">
-      {/* Sidebar */}
-      <aside className={`${isCollapsed ? "w-16 px-2 py-6" : "w-72 p-7"} border-r border-border bg-card/85 backdrop-blur-md flex flex-col justify-between shrink-0 hidden md:flex transition-all duration-300 relative`}>
+    <div className="flex min-h-screen bg-background text-foreground font-sans relative">
+      {/* Subtle dot grid */}
+      <div className="fixed inset-0 bg-grid-dots opacity-30 pointer-events-none z-0" />
+
+      {/* ── Sidebar ──────────────────────────────────────────────────── */}
+      <aside className={`${isCollapsed ? "w-14 px-2 py-6" : "w-64 p-5"} border-r border-foreground/8 bg-background/95 backdrop-blur-md flex flex-col justify-between shrink-0 hidden md:flex transition-all duration-300 relative z-10`}>
         <div>
-          <div className="flex items-center justify-center mb-8 relative w-full">
-            <Link href="/" className={`flex items-center ${isCollapsed ? "justify-center" : "gap-3"} w-full`}>
-              <div className="h-10 w-10 bg-foreground text-background flex items-center justify-center font-black text-sm tracking-tighter shrink-0">
+          {/* Logo row */}
+          <div className="flex items-center justify-between mb-8 w-full">
+            <Link href="/" className={`flex items-center ${isCollapsed ? "justify-center w-full" : "gap-3"}`}>
+              <div className="h-8 w-8 bg-foreground text-background flex items-center justify-center font-black text-xs tracking-tighter shrink-0">
                 VL
               </div>
               {!isCollapsed && (
                 <div>
-                  <h1 className="font-bold text-sm uppercase tracking-wider leading-tight">Velocity</h1>
-                  <span className="text-xs text-muted-foreground uppercase tracking-widest block font-medium">Delivery Engine</span>
+                  <div className="font-mono text-[11px] uppercase tracking-[0.14em] font-bold leading-none">Velocity</div>
+                  <div className="text-[9px] text-muted-foreground font-mono tracking-widest mt-0.5">Delivery Engine</div>
                   {user && (
-                    <span className="text-[11px] text-primary/80 uppercase tracking-wider block font-semibold mt-0.5 max-w-[140px] truncate">
-                      {user.fullName}
-                    </span>
+                    <div className="text-[9px] text-foreground/50 font-mono mt-0.5 truncate max-w-[120px]">{user.fullName}</div>
                   )}
                 </div>
               )}
             </Link>
-            <button
-              onClick={toggleSidebar}
-              className="absolute -right-5 top-1.5 p-1 border border-border bg-background hover:bg-muted text-muted-foreground hover:text-foreground transition-all duration-200 z-20"
-              title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-            >
-              {isCollapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
-            </button>
+            {!isCollapsed && (
+              <button
+                onClick={toggleSidebar}
+                className="p-1.5 border border-foreground/10 hover:border-foreground/30 text-muted-foreground hover:text-foreground transition-all"
+                title="Collapse Sidebar"
+              >
+                <ChevronLeft className="h-3 w-3" />
+              </button>
+            )}
           </div>
 
-          <nav className="space-y-1.5 text-xs uppercase tracking-wider w-full">
+          {/* Expand button when collapsed */}
+          {isCollapsed && (
             <button
-              onClick={() => setActiveTab("projects")}
-              title="Projects"
-              className={`flex items-center transition-all duration-200 border ${
-                activeTab === "projects"
-                  ? "border-foreground bg-foreground text-background font-bold"
-                  : "border-transparent text-muted-foreground hover:border-border"
-              } ${
-                isCollapsed 
-                  ? "h-11 w-11 justify-center mx-auto p-0" 
-                  : "px-4 py-3 gap-3 w-full text-left"
-              }`}
+              onClick={toggleSidebar}
+              className="flex items-center justify-center w-full mb-6 p-1.5 border border-foreground/10 hover:border-foreground/30 text-muted-foreground hover:text-foreground transition-all"
+              title="Expand Sidebar"
             >
-              <Kanban className="h-4 w-4 shrink-0" />
-              {!isCollapsed && <span>Projects</span>}
+              <ChevronRight className="h-3 w-3" />
             </button>
-            <button
-              onClick={() => setActiveTab("github")}
-              title="GitHub Operations"
-              className={`flex items-center transition-all duration-200 border ${
-                activeTab === "github"
-                  ? "border-foreground bg-foreground text-background font-bold"
-                  : "border-transparent text-muted-foreground hover:border-border"
-              } ${
-                isCollapsed 
-                  ? "h-11 w-11 justify-center mx-auto p-0" 
-                  : "px-4 py-3 gap-3 w-full text-left"
-              }`}
-            >
-              <Github className="h-4 w-4 shrink-0" />
-              {!isCollapsed && <span>GitHub Hub</span>}
-            </button>
+          )}
+
+          {/* Nav */}
+          <nav className="space-y-0.5">
+            {navItems.map(item => (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                title={isCollapsed ? item.label : undefined}
+                className={`flex items-center transition-all duration-150 w-full border-l-2 ${
+                  activeTab === item.id
+                    ? "border-l-foreground bg-foreground/8 text-foreground font-bold"
+                    : "border-l-transparent text-muted-foreground hover:border-l-foreground/20 hover:text-foreground hover:bg-foreground/3"
+                } ${isCollapsed ? "justify-center h-10 w-10 mx-auto border-l-0 border border-foreground/8" : "gap-3 px-3 py-2.5 text-[11px] font-mono uppercase tracking-wider"}`}
+              >
+                {item.icon}
+                {!isCollapsed && <span>{item.label}</span>}
+              </button>
+            ))}
           </nav>
         </div>
 
-        <div className="space-y-4 w-full">
+        {/* Bottom area */}
+        <div className="space-y-3">
           {!isCollapsed && (
-            <div className="p-4 border border-border bg-background/50 text-xs text-muted-foreground leading-relaxed">
-              <p className="font-bold text-foreground mb-1.5 uppercase tracking-widest text-[11px]">// PAIR_PROG_ACTIVE</p>
-              <p>Move features from idea to prod with typesafe AI guidance hooks.</p>
+            <div className="border-l-2 border-l-foreground/10 pl-3 py-1">
+              <p className={`${LABEL_CLS} mb-1`}>// PAIR_PROG_ACTIVE</p>
+              <p className="text-[11px] text-muted-foreground font-sans leading-snug">Idea to prod, with AI guidance.</p>
             </div>
           )}
-
           <button
             onClick={() => logout()}
-            title="Logout"
-            className={`flex items-center transition-all duration-200 border border-transparent hover:border-destructive hover:text-destructive hover:bg-destructive/10 font-sans text-xs uppercase tracking-wider ${
-              isCollapsed 
-                ? "h-11 w-11 justify-center mx-auto p-0 text-muted-foreground" 
-                : "px-4 py-3 gap-3 w-full text-left"
+            title={isCollapsed ? "Logout" : undefined}
+            className={`flex items-center transition-all border border-transparent hover:border-red-500/30 hover:text-red-500 hover:bg-red-500/5 text-muted-foreground ${
+              isCollapsed ? "justify-center h-10 w-10 mx-auto" : "gap-2.5 px-3 py-2.5 w-full text-[11px] font-mono uppercase tracking-wider"
             }`}
           >
-            <LogOut className="h-4 w-4 shrink-0" />
+            <LogOut className="h-3.5 w-3.5 shrink-0" />
             {!isCollapsed && <span>Logout</span>}
           </button>
         </div>
       </aside>
 
-      {/* Main Content */}
-      {/* Main Content */}
-      <main className="flex-1 p-8 lg:p-14 overflow-y-auto border-l border-border/40">
+      {/* ── Main Content ─────────────────────────────────────────────── */}
+      <main className="flex-1 overflow-y-auto relative z-10">
         {activeTab === "projects" ? (
-          <>
-            <header className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-14 border-b border-border/60 pb-10">
+          <div className="p-8 lg:p-12 max-w-7xl">
+
+            {/* Header */}
+            <header className="flex flex-col lg:flex-row lg:items-start justify-between gap-6 mb-12 pb-10 border-b border-foreground/8">
               <div>
-                <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground uppercase tracking-widest">
+                <div className={`${LABEL_CLS} flex items-center gap-1.5 mb-3`}>
                   <span>System Cockpit</span>
-                  <span>/</span>
+                  <span className="opacity-40">/</span>
                   <span>Workspace Registry</span>
                 </div>
-                <h1 className="text-3xl lg:text-5xl font-black tracking-tighter uppercase text-foreground">
-                  Deliver Features Faster
+                <h1 className="text-4xl lg:text-5xl font-black tracking-[-0.04em] uppercase text-foreground leading-[0.9]">
+                  Deliver Features<br />Faster.
                 </h1>
-                <p className="text-muted-foreground text-base mt-3 leading-relaxed max-w-2xl font-sans">
-                  Manage your product discovery, PRD specifications, tasks, AI reviews, and production releases in a stark unified dashboard.
+                <p className="text-muted-foreground text-sm mt-4 leading-relaxed max-w-xl font-sans font-normal">
+                  Manage product discovery, PRD specs, engineering tasks, AI reviews, and production releases in one unified workspace.
                 </p>
               </div>
 
               <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
                 <DialogTrigger asChild>
-                  <Button className="rounded-none font-mono text-xs uppercase tracking-widest bg-foreground text-background hover:bg-neutral-800 py-6 px-6 border-2 border-foreground gap-2 transition-all shrink-0">
-                    <Plus className="h-4 w-4" />
+                  <Button className={`${BTN_MONO} h-10 px-5 gap-2 shrink-0 mt-1`}>
+                    <Plus className="h-3.5 w-3.5" />
                     <span>New Project</span>
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="sm:max-w-[480px] bg-card border-2 border-foreground rounded-none p-6 font-mono text-foreground">
+                <DialogContent className="sm:max-w-[480px] bg-background border border-foreground/20 rounded-none p-7 font-sans text-foreground">
                   <form onSubmit={handleSubmit}>
                     <DialogHeader className="mb-6">
-                      <DialogTitle className="text-lg font-bold uppercase tracking-tight">Create New Project</DialogTitle>
-                      <DialogDescription className="text-muted-foreground text-xs font-sans mt-1">
-                        Set up your workspace and connect it to a repository to begin the feature flow.
+                      <DialogTitle className="text-base font-bold uppercase tracking-tight font-sans">Create New Project</DialogTitle>
+                      <DialogDescription className="text-sm text-muted-foreground font-sans mt-1 leading-relaxed">
+                        Set up a workspace and connect it to a repository to begin the feature flow.
                       </DialogDescription>
                     </DialogHeader>
 
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <label htmlFor="name" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">Project Name</label>
+                    <div className="space-y-5">
+                      <div className="space-y-1.5">
+                        <label htmlFor="name" className={LABEL_CLS}>Project Name</label>
                         <Input
                           id="name"
                           placeholder="e.g. My SaaS Platform"
                           value={name}
                           onChange={(e) => setName(e.target.value)}
-                          className="rounded-none border-border bg-background focus:ring-0 focus:border-foreground text-sm py-5"
+                          className="rounded-none border-foreground/20 bg-background focus:border-foreground text-sm h-10"
                         />
                       </div>
 
-                      <div className="space-y-2">
-                        <label htmlFor="description" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">Description</label>
+                      <div className="space-y-1.5">
+                        <label htmlFor="description" className={LABEL_CLS}>Description</label>
                         <Textarea
                           id="description"
                           placeholder="Brief description of the app purpose..."
                           value={description}
                           onChange={(e) => setDescription(e.target.value)}
-                          className="rounded-none border-border bg-background focus:ring-0 focus:border-foreground text-sm min-h-[90px]"
+                          className="rounded-none border-foreground/20 bg-background focus:border-foreground text-sm min-h-[80px] resize-none"
                         />
                       </div>
 
-                      <div className="space-y-3">
-                        <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground block">GitHub Repository Source</label>
-                        
+                      <div className="space-y-2">
+                        <label className={LABEL_CLS}>GitHub Repository Source</label>
+
                         {session ? (
                           <>
-                            {/* Tab Selectors */}
-                            <div className="grid grid-cols-3 gap-1 border border-border p-1 bg-muted/30">
+                            {/* Method selector */}
+                            <div className="grid grid-cols-3 gap-px bg-foreground/10">
                               {(["select", "create", "manual"] as const).map((method) => (
                                 <button
                                   key={method}
@@ -409,26 +359,25 @@ export default function Dashboard() {
                                       setRepo(githubRepos[0]?.fullName || "");
                                     }
                                   }}
-                                  className={`py-1.5 text-[9px] uppercase tracking-wider font-bold transition-all ${
+                                  className={`py-2 text-[10px] font-mono uppercase tracking-wider transition-all ${
                                     repoMethod === method
-                                      ? "bg-foreground text-background"
-                                      : "text-muted-foreground hover:text-foreground"
+                                      ? "bg-foreground text-background font-bold"
+                                      : "bg-background text-muted-foreground hover:text-foreground"
                                   }`}
                                 >
-                                  {method === "select" && "Select Synced"}
-                                  {method === "create" && "Create New"}
-                                  {method === "manual" && "Manual Link"}
+                                  {method === "select" && "Select"}
+                                  {method === "create" && "Create"}
+                                  {method === "manual" && "Manual"}
                                 </button>
                               ))}
                             </div>
 
-                            {/* Conditional Inputs */}
                             {repoMethod === "select" && (
                               <div className="space-y-1">
                                 <select
                                   value={repo}
                                   onChange={(e) => setRepo(e.target.value)}
-                                  className="w-full border border-border bg-background text-xs font-mono p-3 focus-visible:outline-none focus-visible:border-foreground"
+                                  className="w-full border border-foreground/20 bg-background text-sm font-mono p-2.5 focus-visible:outline-none focus-visible:border-foreground"
                                 >
                                   {githubRepos.length > 0 ? (
                                     githubRepos.map((r) => (
@@ -440,43 +389,41 @@ export default function Dashboard() {
                                     <option value="">No repositories found</option>
                                   )}
                                 </select>
-                                <p className="text-[8px] text-muted-foreground font-sans mt-0.5 px-1">
-                                  Lists your GitHub repositories. Choose one to associate.
-                                </p>
+                                <p className="text-[10px] text-muted-foreground font-sans px-0.5">Lists your synced GitHub repositories.</p>
                               </div>
                             )}
 
                             {repoMethod === "create" && (
-                              <div className="space-y-3 p-3 border border-border bg-card/40">
-                                <div className="space-y-1">
-                                  <label htmlFor="newRepoName" className="text-[8px] font-bold uppercase tracking-wider text-muted-foreground block">New Repository Name</label>
+                              <div className="space-y-3 p-4 border border-foreground/10 bg-foreground/[0.02]">
+                                <div className="space-y-1.5">
+                                  <label htmlFor="newRepoName" className={LABEL_CLS}>New Repository Name</label>
                                   <Input
                                     id="newRepoName"
-                                    placeholder="my-new-awesome-project"
+                                    placeholder="my-new-project"
                                     value={newRepoName}
                                     onChange={(e) => setNewRepoName(e.target.value.replace(/[^a-zA-Z0-9-_]/g, "-"))}
-                                    className="rounded-none border-border bg-background text-xs py-3"
+                                    className="rounded-none border-foreground/20 bg-background text-sm h-9"
                                   />
                                 </div>
-                                <div className="space-y-1">
-                                  <label htmlFor="newRepoDesc" className="text-[8px] font-bold uppercase tracking-wider text-muted-foreground block">Description (Optional)</label>
+                                <div className="space-y-1.5">
+                                  <label htmlFor="newRepoDesc" className={LABEL_CLS}>Description (Optional)</label>
                                   <Input
                                     id="newRepoDesc"
                                     placeholder="Repository description..."
                                     value={newRepoDesc}
                                     onChange={(e) => setNewRepoDesc(e.target.value)}
-                                    className="rounded-none border-border bg-background text-xs py-3"
+                                    className="rounded-none border-foreground/20 bg-background text-sm h-9"
                                   />
                                 </div>
-                                <div className="flex items-center gap-2 pt-1">
+                                <div className="flex items-center gap-2">
                                   <input
                                     type="checkbox"
                                     id="newRepoPrivate"
                                     checked={newRepoPrivate}
                                     onChange={(e) => setNewRepoPrivate(e.target.checked)}
-                                    className="accent-foreground size-3.5 rounded-none border border-border cursor-pointer"
+                                    className="accent-foreground size-3.5 cursor-pointer"
                                   />
-                                  <label htmlFor="newRepoPrivate" className="text-[9px] uppercase tracking-wider font-bold text-muted-foreground selection:bg-transparent cursor-pointer">
+                                  <label htmlFor="newRepoPrivate" className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground cursor-pointer">
                                     Private Repository (Recommended)
                                   </label>
                                 </div>
@@ -485,13 +432,13 @@ export default function Dashboard() {
 
                             {repoMethod === "manual" && (
                               <div className="relative">
-                                <Github className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Github className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                                 <Input
                                   id="repo"
                                   placeholder="username/project-repo"
                                   value={repo}
                                   onChange={(e) => setRepo(e.target.value)}
-                                  className="pl-10 rounded-none border-border bg-background focus:ring-0 focus:border-foreground text-sm py-5"
+                                  className="pl-9 rounded-none border-foreground/20 bg-background text-sm h-10"
                                 />
                               </div>
                             )}
@@ -499,39 +446,39 @@ export default function Dashboard() {
                         ) : (
                           <div className="space-y-2">
                             <div className="relative">
-                              <Github className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                              <Github className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                               <Input
-                                  id="repo"
-                                  placeholder="username/project-repo"
-                                  value={repo}
-                                  onChange={(e) => setRepo(e.target.value)}
-                                  className="pl-10 rounded-none border-border bg-background focus:ring-0 focus:border-foreground text-sm py-5"
+                                id="repo"
+                                placeholder="username/project-repo"
+                                value={repo}
+                                onChange={(e) => setRepo(e.target.value)}
+                                className="pl-9 rounded-none border-foreground/20 bg-background text-sm h-10"
                               />
                             </div>
-                            <p className="text-[9px] text-muted-foreground font-sans leading-relaxed">
-                              💡 Link your GitHub account in the **GitHub Developer Deck** sidebar tab to select synced repositories or create them directly.
+                            <p className="text-[10px] text-muted-foreground font-sans leading-relaxed">
+                              Link your GitHub account in the GitHub Hub tab to select or create repositories directly.
                             </p>
                           </div>
                         )}
                       </div>
                     </div>
 
-                    <DialogFooter className="mt-8 gap-3 sm:gap-0">
+                    <DialogFooter className="mt-7 gap-2 sm:gap-2">
                       <Button
                         type="button"
                         variant="outline"
                         onClick={() => setIsCreateOpen(false)}
-                        className="rounded-none font-mono text-xs uppercase tracking-widest border border-border"
+                        className={`${BTN_GHOST} h-9 px-5`}
                       >
                         Cancel
                       </Button>
                       <Button
                         type="submit"
                         disabled={createProjectMutation.isPending || isCreatingRepo}
-                        className="rounded-none font-mono text-xs uppercase tracking-widest bg-foreground text-background hover:bg-neutral-800"
+                        className={`${BTN_MONO} h-9 px-5`}
                       >
-                        {createProjectMutation.isPending || isCreatingRepo 
-                          ? (isCreatingRepo ? "Creating Repo..." : "Creating Project...") 
+                        {createProjectMutation.isPending || isCreatingRepo
+                          ? (isCreatingRepo ? "Creating Repo..." : "Creating...")
                           : "Create Project"}
                       </Button>
                     </DialogFooter>
@@ -540,60 +487,68 @@ export default function Dashboard() {
               </Dialog>
             </header>
 
+            {/* Project List */}
             {isLoading ? (
-              <div className="flex flex-col items-center justify-center py-32 gap-5">
-                <Spinner className="h-7 w-7 text-foreground" />
-                <p className="text-muted-foreground text-sm uppercase tracking-widest font-bold animate-pulse">Loading projects...</p>
+              <div className="flex flex-col items-center justify-center py-32 gap-4">
+                <Spinner className="h-6 w-6 text-foreground" />
+                <p className={`${LABEL_CLS} animate-pulse`}>Loading projects...</p>
               </div>
             ) : !projects || projects.length === 0 ? (
-              <div className="border border-border bg-card rounded-none p-20 text-center max-w-xl mx-auto flex flex-col items-center gap-7 mt-8">
-                <div className="p-5 border border-border bg-background">
-                  <Kanban className="h-9 w-9 text-foreground" />
+              <div className="border border-foreground/10 p-20 text-center max-w-lg mx-auto flex flex-col items-center gap-7 mt-4">
+                <div className="p-5 border border-foreground/10 bg-foreground/[0.02]">
+                  <Kanban className="h-8 w-8 text-foreground" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold uppercase mb-3">No Projects Configured</h2>
-                  <p className="text-muted-foreground text-sm leading-relaxed max-w-md mx-auto font-sans">
+                  <h2 className="text-lg font-bold uppercase tracking-tight mb-3">No Projects Configured</h2>
+                  <p className="text-muted-foreground text-sm leading-relaxed max-w-sm mx-auto font-sans font-normal">
                     Kick off the Velocity lifecycle. Add your first project, define requirements, generate branches, run reviews, and ship features.
                   </p>
                 </div>
                 <Button
                   onClick={() => setIsCreateOpen(true)}
-                  className="gap-2 font-sans text-sm uppercase tracking-widest bg-foreground text-background hover:bg-neutral-800 border-2 border-foreground py-6 px-10 rounded-none transition-all"
+                  className={`${BTN_MONO} h-10 px-8 gap-2`}
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-3.5 w-3.5" />
                   <span>Create Your First Project</span>
                 </Button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-7">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-foreground/8">
                 {projects.map((project) => (
-                  <div 
-                    key={project.id} 
-                    className="group border border-border hover:border-foreground bg-card transition-all duration-300 rounded-none flex flex-col justify-between overflow-hidden relative"
+                  <div
+                    key={project.id}
+                    className="group bg-background hover:bg-foreground/[0.02] transition-colors duration-200 flex flex-col overflow-hidden relative"
                   >
-                    <div className="w-full h-1 bg-foreground/20 group-hover:bg-foreground transition-all duration-300" />
-                    
-                    <div className="p-7 flex-1 flex flex-col justify-between">
+                    {/* Left accent rule — appears on hover */}
+                    <div className="absolute left-0 top-0 bottom-0 w-[2px] bg-foreground scale-y-0 group-hover:scale-y-100 transition-transform duration-200 origin-top" />
+
+                    <div className="p-6 flex-1 flex flex-col justify-between">
                       <div>
-                        <div className="flex items-center justify-between mb-5">
-                          <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground bg-background border border-border py-1.5 px-3">
-                            <Github className="h-3.5 w-3.5 shrink-0" />
-                            <span className="truncate max-w-[160px] uppercase">{project.githubRepo.replace("https://", "").replace("github.com/", "")}</span>
-                          </div>
+                        {/* Repo badge */}
+                        <div className="inline-flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground border border-foreground/10 py-1 px-2.5 mb-5">
+                          <Github className="h-3 w-3 shrink-0" />
+                          <span className="truncate max-w-[180px]">
+                            {project.githubRepo.replace("https://", "").replace("github.com/", "")}
+                          </span>
                         </div>
-                        <h3 className="text-xl font-black uppercase text-foreground mb-3 truncate group-hover:text-primary transition-all">
+
+                        <h3 className="text-lg font-black uppercase tracking-tight text-foreground mb-2.5 truncate">
                           {project.name}
                         </h3>
-                        <p className="text-muted-foreground text-sm font-sans leading-relaxed line-clamp-3">
+                        <p className="text-muted-foreground text-sm font-sans leading-relaxed line-clamp-3 font-normal">
                           {project.description}
                         </p>
                       </div>
 
-                      <div className="mt-7 pt-5 border-t border-border/60">
+                      {/* Footer */}
+                      <div className="mt-6 pt-5 border-t border-foreground/8">
                         <Link href={`/projects/${project.id}`} className="w-full block">
-                          <Button variant="secondary" className="w-full justify-between rounded-none py-5 px-5 font-sans text-sm uppercase tracking-wider bg-background text-foreground border border-border hover:bg-foreground hover:text-background hover:border-foreground transition-all group/btn">
+                          <Button
+                            variant="ghost"
+                            className="w-full justify-between rounded-none h-10 px-0 font-mono text-[11px] uppercase tracking-wider text-muted-foreground hover:text-foreground hover:bg-transparent group/btn transition-all"
+                          >
                             <span>Open Workspace</span>
-                            <ArrowRight className="h-4 w-4 transition-transform group-hover/btn:translate-x-1" />
+                            <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover/btn:translate-x-0.5" />
                           </Button>
                         </Link>
                       </div>
@@ -602,93 +557,92 @@ export default function Dashboard() {
                 ))}
               </div>
             )}
-          </>
+          </div>
         ) : (
-          /* GitHub Hub Console */
-          <div className="space-y-8">
-            <header className="border-b border-border/60 pb-8 mb-8">
-              <div className="flex items-center gap-2 mb-2 text-xs text-muted-foreground uppercase tracking-widest">
+          /* ── GitHub Hub ─────────────────────────────────────────────── */
+          <div className="p-8 lg:p-12">
+
+            {/* Header */}
+            <header className="border-b border-foreground/8 pb-8 mb-10">
+              <div className={`${LABEL_CLS} flex items-center gap-1.5 mb-3`}>
                 <span>Developer Console</span>
-                <span>/</span>
+                <span className="opacity-40">/</span>
                 <span>GitHub Orchestrator</span>
               </div>
-              <h1 className="text-3xl lg:text-4xl font-black uppercase tracking-tighter text-foreground flex items-center gap-4">
+              <h1 className="text-4xl lg:text-5xl font-black uppercase tracking-[-0.04em] text-foreground leading-[0.9] flex items-center gap-4">
                 <Github className="h-9 w-9 text-foreground shrink-0" />
-                <span>GitHub Core Developer Deck</span>
+                <span>GitHub<br />Developer Deck</span>
               </h1>
-              <p className="text-muted-foreground text-base font-sans mt-3 leading-relaxed">
-                Execute Git operations, trigger Pull Requests, perform comparative diff audits, and review repository contribution stats.
+              <p className="text-muted-foreground text-sm font-sans mt-4 leading-relaxed max-w-xl font-normal">
+                Execute Git operations, trigger pull requests, run comparative diff audits, and review repository contribution stats.
               </p>
             </header>
 
             {isSessionPending ? (
-              <div className="flex flex-col items-center justify-center py-24 gap-5">
-                <Spinner className="h-7 w-7 text-foreground" />
-                <p className="text-muted-foreground text-sm uppercase tracking-widest font-bold animate-pulse">Checking GitHub Credentials...</p>
+              <div className="flex flex-col items-center justify-center py-24 gap-4">
+                <Spinner className="h-6 w-6 text-foreground" />
+                <p className={`${LABEL_CLS} animate-pulse`}>Checking GitHub credentials...</p>
               </div>
             ) : !session ? (
-              /* GitHub SignIn Request Screen */
-              <div className="max-w-md mx-auto border border-border bg-card p-8 rounded-none text-center shadow-xl space-y-6 mt-8 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-500 via-amber-500 to-emerald-500" />
-                <div className="size-16 mx-auto bg-foreground/5 border border-border flex items-center justify-center rounded-none relative">
-                  <Github className="h-8 w-8 text-foreground" />
-                  <AlertCircle className="h-4 w-4 text-red-500 absolute -top-1.5 -right-1.5" />
+              /* GitHub Sign-in */
+              <div className="max-w-md mx-auto border border-foreground/15 bg-foreground/[0.02] p-10 text-center space-y-7 relative overflow-hidden">
+                <div className="h-[2px] w-full bg-foreground absolute top-0 left-0" />
+                <div className="size-14 mx-auto bg-foreground/5 border border-foreground/10 flex items-center justify-center relative">
+                  <Github className="h-7 w-7 text-foreground" />
+                  <AlertCircle className="h-3.5 w-3.5 text-red-500 absolute -top-1.5 -right-1.5" />
                 </div>
                 <div className="space-y-3">
-                  <h2 className="text-lg font-bold uppercase tracking-tight text-foreground">GitHub Account Not Linked</h2>
-                  <p className="text-muted-foreground text-sm font-sans leading-relaxed">
-                    To trigger pull request files analytics, review git logs, and perform repo sync operations, you must link your GitHub profile first.
+                  <h2 className="text-base font-bold uppercase tracking-tight text-foreground">GitHub Account Not Linked</h2>
+                  <p className="text-muted-foreground text-sm font-sans leading-relaxed font-normal">
+                    To trigger pull request analytics, review git logs, and perform repo sync operations, link your GitHub profile first.
                   </p>
                 </div>
                 <Button
                   onClick={async () => {
                     try {
-                      await authClient.signIn.social({
-                        provider: "github",
-                        callbackURL: window.location.href,
-                      });
-                    } catch (e: any) {
-                      toast.error(`GitHub login failed: ${e.message || e}`);
-                    }
+                      await authClient.signIn.social({ provider: "github", callbackURL: window.location.href });
+                    } catch (e: any) { toast.error(`GitHub login failed: ${e.message || e}`); }
                   }}
-                  className="w-full rounded-none font-mono text-xs uppercase tracking-widest bg-foreground text-background hover:bg-neutral-800 py-6 border border-foreground flex items-center justify-center gap-2"
+                  className={`${BTN_MONO} w-full h-11 gap-2`}
                 >
                   <Github className="h-4 w-4 fill-background text-background shrink-0" />
                   <span>Link GitHub Profile</span>
                 </Button>
               </div>
             ) : (
-              /* GitHub Connected Workspace Hub */
-              <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                {/* Left Side: Repos & Actions Menu */}
-                <div className="lg:col-span-1 space-y-6">
-                  {/* Connected Profile */}
-                  <Card className="border-border rounded-none bg-card/50">
-                    <CardHeader className="p-5 border-b border-border">
-                      <CardTitle className="text-xs uppercase font-bold text-muted-foreground tracking-wider">GitHub Profile</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-5 flex items-center gap-4">
-                      {session.user.image ? (
-                        <img src={session.user.image} alt="Avatar" className="h-10 w-10 border border-border rounded-none shrink-0" />
-                      ) : (
-                        <div className="h-10 w-10 border border-border bg-muted flex items-center justify-center text-xs shrink-0 font-bold">GH</div>
-                      )}
-                      <div className="min-w-0 flex-1">
-                        <p className="font-bold text-sm uppercase text-foreground leading-tight truncate">{session.user.name}</p>
-                        <p className="text-xs text-muted-foreground truncate leading-relaxed mt-0.5">{session.user.email}</p>
-                      </div>
-                    </CardContent>
-                  </Card>
+              /* Connected Workspace */
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-7">
 
-                  {/* Active Repository Selector */}
-                  <div className="space-y-2">
-                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
-                      Select Repository {isLoadingRepos && "(Loading...)"}
+                {/* ── Left Column: Profile + Repo + Sub-tabs ── */}
+                <div className="lg:col-span-1 space-y-5">
+
+                  {/* Profile */}
+                  <div className="border border-foreground/10 bg-foreground/[0.02]">
+                    <div className="px-4 py-3 border-b border-foreground/8">
+                      <span className={LABEL_CLS}>GitHub Profile</span>
+                    </div>
+                    <div className="px-4 py-4 flex items-center gap-3">
+                      {session.user.image ? (
+                        <img src={session.user.image} alt="Avatar" className="h-9 w-9 border border-foreground/10 shrink-0 object-cover" />
+                      ) : (
+                        <div className="h-9 w-9 border border-foreground/10 bg-foreground/5 flex items-center justify-center text-[11px] font-bold shrink-0">GH</div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="font-bold text-sm uppercase text-foreground leading-tight truncate">{session.user.name}</p>
+                        <p className="text-[11px] text-muted-foreground truncate mt-0.5 font-sans">{session.user.email}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Repo Selector */}
+                  <div className="space-y-1.5">
+                    <label className={LABEL_CLS}>
+                      Select Repository {isLoadingRepos && <span className="opacity-60">(Loading...)</span>}
                     </label>
                     <select
                       value={selectedRepo}
                       onChange={(e) => setSelectedRepo(e.target.value)}
-                      className="w-full border border-border rounded-none bg-background text-sm font-sans p-3 focus-visible:outline-none focus-visible:border-foreground"
+                      className="w-full border border-foreground/15 bg-background text-sm font-mono p-2.5 focus-visible:outline-none focus-visible:border-foreground"
                       disabled={isLoadingRepos}
                     >
                       {githubRepos.length > 0 ? (
@@ -707,22 +661,16 @@ export default function Dashboard() {
                     </select>
                   </div>
 
-                  {/* Subtabs Menu */}
-                  <nav className="flex flex-col space-y-1.5 font-sans text-xs uppercase">
-                    {[
-                      { id: "pr", label: "PR & Issues", icon: <GitPullRequest className="h-4 w-4" /> },
-                      { id: "review", label: "Code Review", icon: <ShieldCheck className="h-4 w-4" /> },
-                      { id: "diff", label: "Diff Analysis", icon: <FileCode className="h-4 w-4" /> },
-                      { id: "ops", label: "Push & Pull", icon: <RefreshCw className="h-4 w-4" /> },
-                      { id: "analytics", label: "Analytics Board", icon: <BarChart2 className="h-4 w-4" /> }
-                    ].map((tab) => (
+                  {/* Sub-tabs */}
+                  <nav className="flex flex-col gap-px bg-foreground/8">
+                    {subTabs.map(tab => (
                       <button
                         key={tab.id}
-                        onClick={() => setSelectedSubTab(tab.id as any)}
-                        className={`flex items-center gap-3 px-4 py-3 border text-left transition-all ${
+                        onClick={() => setSelectedSubTab(tab.id)}
+                        className={`flex items-center gap-2.5 px-3.5 py-2.5 text-[11px] font-mono uppercase tracking-wider text-left transition-all ${
                           selectedSubTab === tab.id
-                            ? "border-foreground bg-foreground text-background font-bold"
-                            : "border-border hover:border-foreground bg-card/25"
+                            ? "bg-foreground text-background font-bold"
+                            : "bg-background text-muted-foreground hover:bg-foreground/4 hover:text-foreground"
                         }`}
                       >
                         {tab.icon}
@@ -732,339 +680,296 @@ export default function Dashboard() {
                   </nav>
                 </div>
 
-                {/* Right Side: Active Workspace Console */}
-                <div className="lg:col-span-3">
-                  <Card className="border-border bg-card rounded-none h-full min-h-[600px] flex flex-col justify-between relative overflow-hidden">
-                    <CardHeader className="border-b border-border bg-muted/20 p-6 flex flex-row items-center justify-between gap-4">
-                      <div>
-                        <CardTitle className="text-sm uppercase font-bold text-foreground">
-                          {selectedSubTab === "pr" && "PR & Issue Lifecycle Manager"}
-                          {selectedSubTab === "review" && "GitHub Review Auditor"}
-                          {selectedSubTab === "diff" && "Git Diff Comparative Suite"}
-                          {selectedSubTab === "ops" && "Remote Push & Sync Operations"}
-                          {selectedSubTab === "analytics" && "Repository Activity Analytics"}
-                        </CardTitle>
-                        <CardDescription className="text-xs text-muted-foreground font-sans mt-1">
-                          Active Target: <span className="font-mono text-foreground font-bold">{selectedRepo}</span>
-                        </CardDescription>
+                {/* ── Right Column: Console Panel ── */}
+                <div className="lg:col-span-3 flex flex-col border border-foreground/10 bg-background min-h-[640px]">
+                  {/* Console header */}
+                  <div className="border-b border-foreground/10 px-6 py-4 flex items-center justify-between bg-foreground/[0.02]">
+                    <div>
+                      <div className="font-mono text-sm font-bold uppercase tracking-wide text-foreground">
+                        {consoleTitles[selectedSubTab]}
                       </div>
-                      <Badge className="bg-foreground text-background rounded-none text-xs uppercase tracking-wider font-bold px-3 py-1">
-                        Connected
-                      </Badge>
-                    </CardHeader>
+                      <div className="text-[10px] text-muted-foreground font-mono mt-0.5">
+                        target: <span className="text-foreground">{selectedRepo}</span>
+                      </div>
+                    </div>
+                    <Badge className="bg-foreground text-background rounded-none text-[9px] uppercase tracking-wider font-mono px-2.5 py-1">
+                      Connected
+                    </Badge>
+                  </div>
 
-                    <CardContent className="p-7 flex-1 overflow-y-auto space-y-7">
-                      {/* TAB 1: PR & ISSUES */}
-                      {selectedSubTab === "pr" && (
-                        <div className="space-y-7">
-                          {/* Create Issue */}
-                          <div className="border border-border p-6 bg-muted/5 space-y-5">
-                            <h3 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2.5 border-b border-border pb-3 text-foreground">
-                              <Info className="h-4 w-4" />
-                              <span>createIssue()</span>
+                  {/* Console content */}
+                  <div className="p-6 flex-1 overflow-y-auto space-y-6">
+
+                    {/* TAB 1: PR & ISSUES */}
+                    {selectedSubTab === "pr" && (
+                      <div className="space-y-5">
+                        {/* Create Issue */}
+                        <div className={PANEL_CLS}>
+                          <h3 className={PANEL_HDR}>
+                            <Info className="h-3.5 w-3.5" />
+                            <span>createIssue()</span>
+                          </h3>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <Input
+                              placeholder="Issue Title"
+                              value={issueTitle}
+                              onChange={(e) => setIssueTitle(e.target.value)}
+                              className="rounded-none border-foreground/15 bg-background sm:col-span-1 text-sm h-9"
+                            />
+                            <Input
+                              placeholder="Issue Body / Description"
+                              value={issueBody}
+                              onChange={(e) => setIssueBody(e.target.value)}
+                              className="rounded-none border-foreground/15 bg-background sm:col-span-2 text-sm h-9"
+                            />
+                          </div>
+                          <Button
+                            onClick={() => {
+                              if (!issueTitle.trim()) { toast.error("Issue title is required"); return; }
+                              toast.success(`[GitHub] createIssue() → 201 Created. Issue #108: "${issueTitle}" opened.`);
+                              setIssueTitle(""); setIssueBody("");
+                            }}
+                            className={`${BTN_MONO} h-9 px-5`}
+                          >
+                            Execute createIssue()
+                          </Button>
+                        </div>
+
+                        {/* Create PR */}
+                        <div className={PANEL_CLS}>
+                          <h3 className={PANEL_HDR}>
+                            <GitPullRequest className="h-3.5 w-3.5" />
+                            <span>createPullRequest()</span>
+                          </h3>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <Input
+                              placeholder="PR Title"
+                              value={prTitle}
+                              onChange={(e) => setPrTitle(e.target.value)}
+                              className="rounded-none border-foreground/15 bg-background sm:col-span-2 text-sm h-9"
+                            />
+                            <Input
+                              placeholder="From Branch"
+                              value={prBranch}
+                              onChange={(e) => setPrBranch(e.target.value)}
+                              className="rounded-none border-foreground/15 bg-background sm:col-span-1 text-sm h-9"
+                            />
+                          </div>
+                          <Button
+                            onClick={() => {
+                              if (!prTitle.trim()) { toast.error("PR title is required"); return; }
+                              toast.success(`[GitHub] createPullRequest() → 200 OK. PR #45 from "${prBranch}" to "main".`);
+                              setPrTitle("");
+                            }}
+                            className={`${BTN_MONO} h-9 px-5`}
+                          >
+                            Execute createPullRequest()
+                          </Button>
+                        </div>
+
+                        {/* Merge + Release */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-foreground/8">
+                          <div className={`${PANEL_CLS} space-y-4`}>
+                            <h3 className={PANEL_HDR}>
+                              <GitMerge className="h-3.5 w-3.5" />
+                              <span>mergePullRequest()</span>
                             </h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                              <Input 
-                                placeholder="Issue Title" 
-                                value={issueTitle}
-                                onChange={(e) => setIssueTitle(e.target.value)}
-                                className="rounded-none border-border bg-background sm:col-span-1 text-sm"
-                              />
-                              <Input 
-                                placeholder="Issue Body / Description" 
-                                value={issueBody}
-                                onChange={(e) => setIssueBody(e.target.value)}
-                                className="rounded-none border-border bg-background sm:col-span-2 text-sm"
-                              />
-                            </div>
-                            <Button 
-                              onClick={() => {
-                                if (!issueTitle.trim()) {
-                                  toast.error("Issue title is required");
-                                  return;
-                                }
-                                toast.success(`[GitHub] createIssue() status: 201 Created. Issue #108: "${issueTitle}" opened successfully.`);
-                                setIssueTitle("");
-                                setIssueBody("");
-                              }}
-                              className="rounded-none text-xs uppercase font-sans tracking-wider bg-foreground text-background hover:bg-neutral-800"
+                            <p className="text-sm text-muted-foreground font-sans leading-relaxed font-normal">
+                              Merges PR #45 into branch main, committing all generated code.
+                            </p>
+                            <Button
+                              onClick={() => toast.success("[GitHub] mergePullRequest() → 200 SUCCESS. Commit merged: d3c4b9a into main.")}
+                              className={`${BTN_MONO} h-9 px-5`}
                             >
-                              Execute createIssue()
+                              Execute mergePullRequest()
                             </Button>
                           </div>
-
-                          {/* Create PR */}
-                          <div className="border border-border p-6 bg-muted/5 space-y-5">
-                            <h3 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2.5 border-b border-border pb-3 text-foreground">
-                              <GitPullRequest className="h-4 w-4" />
-                              <span>createPullRequest()</span>
+                          <div className={`${PANEL_CLS} space-y-4`}>
+                            <h3 className={PANEL_HDR}>
+                              <Tag className="h-3.5 w-3.5" />
+                              <span>createRelease()</span>
                             </h3>
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                              <Input 
-                                placeholder="PR Title" 
-                                value={prTitle}
-                                onChange={(e) => setPrTitle(e.target.value)}
-                                className="rounded-none border-border bg-background sm:col-span-2 text-sm"
+                            <div className="flex items-center gap-2">
+                              <Input
+                                value={releaseTag}
+                                onChange={(e) => setReleaseTag(e.target.value)}
+                                className="rounded-none border-foreground/15 bg-background text-sm h-9 max-w-[120px] font-mono"
                               />
-                              <Input 
-                                placeholder="From Branch" 
-                                value={prBranch}
-                                onChange={(e) => setPrBranch(e.target.value)}
-                                className="rounded-none border-border bg-background sm:col-span-1 text-sm"
-                              />
-                            </div>
-                            <Button 
-                              onClick={() => {
-                                if (!prTitle.trim()) {
-                                  toast.error("PR title is required");
-                                  return;
-                                }
-                                toast.success(`[GitHub] createPullRequest() status: 200 OK. PR #45 opened from "${prBranch}" to "main".`);
-                                setPrTitle("");
-                              }}
-                              className="rounded-none text-xs uppercase font-sans tracking-wider bg-foreground text-background hover:bg-neutral-800"
-                            >
-                              Execute createPullRequest()
-                            </Button>
-                          </div>
-
-                          {/* Merge & Release Actions */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            <div className="border border-border p-6 bg-muted/5 space-y-5">
-                              <h3 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2.5 border-b border-border pb-3 text-foreground">
-                                <GitMerge className="h-4 w-4" />
-                                <span>mergePullRequest()</span>
-                              </h3>
-                              <p className="text-sm text-muted-foreground font-sans leading-relaxed">
-                                Merges the active PR #45 into branch main, committing all generated code.
-                              </p>
-                              <Button 
-                                onClick={() => {
-                                  toast.success("[GitHub] mergePullRequest() status: 200 SUCCESS. Commit merged: d3c4b9a into main.");
-                                }}
-                                className="rounded-none text-xs uppercase font-sans tracking-wider bg-foreground text-background hover:bg-neutral-800"
+                              <Button
+                                onClick={() => toast.success(`[GitHub] createRelease() → 201 Created. Tag ${releaseTag} published.`)}
+                                className={`${BTN_MONO} h-9 px-4`}
                               >
-                                Execute mergePullRequest()
+                                Execute
                               </Button>
-                            </div>
-
-                            <div className="border border-border p-6 bg-muted/5 space-y-5">
-                              <h3 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2.5 border-b border-border pb-3 text-foreground">
-                                <Tag className="h-4 w-4" />
-                                <span>createRelease()</span>
-                              </h3>
-                              <div className="flex items-center gap-3">
-                                <Input 
-                                  value={releaseTag}
-                                  onChange={(e) => setReleaseTag(e.target.value)}
-                                  className="rounded-none border-border bg-background text-sm max-w-[140px]"
-                                />
-                                <Button 
-                                  onClick={() => {
-                                    toast.success(`[GitHub] createRelease() status: 201 Created. Tag ${releaseTag} published to production.`);
-                                  }}
-                                  className="rounded-none text-xs uppercase font-sans tracking-wider bg-foreground text-background hover:bg-neutral-800"
-                                >
-                                  Execute createRelease()
-                                </Button>
-                              </div>
                             </div>
                           </div>
                         </div>
-                      )}
+                      </div>
+                    )}
 
-                      {/* TAB 2: CODE REVIEW FLOW */}
-                      {selectedSubTab === "review" && (
-                        <div className="space-y-7">
-                          <div className="border border-border p-6 bg-muted/5 space-y-5">
-                            <div className="flex items-center justify-between border-b border-border pb-3">
-                              <h3 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2.5 text-foreground">
-                                <ShieldCheck className="h-4 w-4" />
-                                <span>Code Review Audit Flow</span>
-                              </h3>
-                              <span className="text-xs font-mono text-muted-foreground">listPullRequests() & getPullRequestFiles()</span>
-                            </div>
-
-                            <div className="space-y-5">
-                              <div className="space-y-2">
-                                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground block">
-                                  Select Open Pull Request {isLoadingPulls && "(Loading...)"}
-                                </label>
-                                <select
-                                  value={selectedPrNumber || ""}
-                                  onChange={(e) => setSelectedPrNumber(Number(e.target.value) || null)}
-                                  className="w-full border border-border rounded-none bg-background text-sm font-sans p-3 focus-visible:outline-none focus-visible:border-foreground"
-                                  disabled={isLoadingPulls || activePulls.length === 0}
-                                >
-                                  {activePulls.length > 0 ? (
-                                    activePulls.map((pr) => (
-                                      <option key={pr.id} value={pr.number}>
-                                        PR #{pr.number}: {pr.title} (by @{pr.user})
-                                      </option>
-                                    ))
-                                  ) : (
-                                    <option value="">No open pull requests found</option>
-                                  )}
-                                </select>
-                              </div>
-
-                              <div className="pl-3 text-xs space-y-2 text-muted-foreground border-l-2 border-border/80">
-                                <p className="font-bold uppercase tracking-wider text-foreground text-[11px]">// Changed Files (getPullRequestFiles()):</p>
-                                {isLoadingFiles ? (
-                                  <p className="animate-pulse">Loading modified files list...</p>
-                                ) : prFiles.length > 0 ? (
-                                  prFiles.map((file, i) => (
-                                    <p key={i} className="flex items-center gap-2 truncate">
-                                      <FileCode className="h-4 w-4 text-foreground shrink-0" />
-                                      <span className="truncate">{file.filepath}</span>
-                                      <span className="text-[10px] px-1.5 bg-muted uppercase shrink-0 font-sans">{file.status}</span>
-                                      {file.additions !== undefined && <span className="text-emerald-500 shrink-0 font-bold">+{file.additions}</span>}
-                                      {file.deletions !== undefined && <span className="text-red-500 shrink-0 font-bold">-{file.deletions}</span>}
-                                    </p>
+                    {/* TAB 2: CODE REVIEW */}
+                    {selectedSubTab === "review" && (
+                      <div className="space-y-5">
+                        <div className={PANEL_CLS}>
+                          <div className="flex items-center justify-between border-b border-foreground/10 pb-3">
+                            <h3 className="text-[11px] font-mono font-bold uppercase tracking-wider flex items-center gap-2 text-foreground">
+                              <ShieldCheck className="h-3.5 w-3.5" />
+                              <span>Code Review Audit Flow</span>
+                            </h3>
+                            <span className="text-[9px] font-mono text-muted-foreground">listPullRequests() · getPullRequestFiles()</span>
+                          </div>
+                          <div className="space-y-4">
+                            <div className="space-y-1.5">
+                              <label className={LABEL_CLS}>
+                                Select Open Pull Request {isLoadingPulls && <span className="opacity-60">(Loading...)</span>}
+                              </label>
+                              <select
+                                value={selectedPrNumber || ""}
+                                onChange={(e) => setSelectedPrNumber(Number(e.target.value) || null)}
+                                className="w-full border border-foreground/15 bg-background text-sm font-sans p-2.5 focus-visible:outline-none focus-visible:border-foreground"
+                                disabled={isLoadingPulls || activePulls.length === 0}
+                              >
+                                {activePulls.length > 0 ? (
+                                  activePulls.map((pr) => (
+                                    <option key={pr.id} value={pr.number}>
+                                      PR #{pr.number}: {pr.title} (by @{pr.user})
+                                    </option>
                                   ))
                                 ) : (
-                                  <p className="italic">No changed files detected for this pull request.</p>
+                                  <option value="">No open pull requests found</option>
                                 )}
-                              </div>
+                              </select>
                             </div>
-                          </div>
-
-                          {/* AI RAG Trigger Card */}
-                          <div className="border border-border p-6 bg-muted/5 space-y-4">
-                            <h3 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2.5 border-b border-border pb-3 text-foreground">
-                              <span>Generate AI Review with RAG (Pinecone & Gemini)</span>
-                            </h3>
-                            <p className="text-sm text-muted-foreground leading-relaxed font-sans">
-                              Triggering this audit will fetch the PR's unified diff from GitHub, chunk and vector-index it inside Pinecone, perform retrieval query matches, analyze the code with Gemini, and submit inline comments back to GitHub.
-                            </p>
-                            <div className="pt-1">
-                              <Button
-                                onClick={async () => {
-                                  if (!selectedPrNumber) {
-                                    toast.warning("Please select a pull request first");
-                                    return;
-                                  }
-                                  setIsGeneratingReview(true);
-                                  try {
-                                    const res = await fetch("/api/github/pulls/review", {
-                                      method: "POST",
-                                      headers: {
-                                        "Content-Type": "application/json",
-                                      },
-                                      body: JSON.stringify({
-                                        repoFullName: selectedRepo,
-                                        prNumber: selectedPrNumber,
-                                      }),
-                                    });
-
-                                    if (!res.ok) {
-                                      const errData = await res.json();
-                                      throw new Error(errData.error || "Failed to generate AI review");
-                                    }
-
-                                    const review = await res.json();
-                                    toast.success(`[AI Auditor] Review generated! Status: ${review.status.toUpperCase()}. Comments submitted to GitHub.`);
-                                  } catch (err: any) {
-                                    toast.error(`AI Audit failed: ${err.message}`);
-                                  } finally {
-                                    setIsGeneratingReview(false);
-                                  }
-                                }}
-                                disabled={isGeneratingReview || !selectedPrNumber}
-                                className="rounded-none w-full text-xs uppercase font-sans tracking-wider bg-foreground text-background hover:bg-neutral-800 py-5"
-                              >
-                                {isGeneratingReview ? "Running RAG & AI Audit..." : "Run AI RAG Audit & Submit"}
-                              </Button>
-                            </div>
-                          </div>
-
-                          <div className="border border-border p-6 bg-muted/5 space-y-5">
-                            <h3 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2.5 border-b border-border pb-3 text-foreground">
-                              <span>Manual Review & Sign-Off override</span>
-                            </h3>
-                            <div className="space-y-4">
-                              <Textarea 
-                                placeholder="Enter review comments / audit details..."
-                                value={reviewComment}
-                                onChange={(e) => setReviewComment(e.target.value)}
-                                className="rounded-none border-border bg-background text-sm font-sans"
-                                rows={3}
-                              />
-                              <div className="flex flex-wrap gap-2">
-                                <Button 
-                                  onClick={() => {
-                                    if (!reviewComment.trim()) {
-                                      toast.error("Please add a review comment first");
-                                      return;
-                                    }
-                                    toast.success(`[GitHub] Manual createReview() executed on PR #${selectedPrNumber || 45}: "${reviewComment}"`);
-                                    setReviewComment("");
-                                  }}
-                                  disabled={!selectedPrNumber}
-                                  className="rounded-none text-[10px] uppercase font-mono tracking-wider bg-red-600/10 text-red-500 hover:bg-red-600/20 border border-red-500/20"
-                                >
-                                  Request Changes
-                                </Button>
-                                <Button 
-                                  onClick={() => {
-                                    toast.success(`[GitHub] Manual approveReview() executed. PR #${selectedPrNumber || 45} approved.`);
-                                  }}
-                                  disabled={!selectedPrNumber}
-                                  className="rounded-none text-[10px] uppercase font-mono tracking-wider bg-emerald-600 text-white hover:bg-emerald-700"
-                                >
-                                  Approve PR #{selectedPrNumber || 45}
-                                </Button>
-                              </div>
+                            <div className="pl-3 text-xs space-y-1.5 text-muted-foreground border-l-2 border-foreground/10 py-1">
+                              <p className={`${LABEL_CLS} text-foreground`}>// Changed Files (getPullRequestFiles()):</p>
+                              {isLoadingFiles ? (
+                                <p className="animate-pulse text-[11px]">Loading modified files...</p>
+                              ) : prFiles.length > 0 ? (
+                                prFiles.map((file, i) => (
+                                  <p key={i} className="flex items-center gap-2 truncate text-[11px]">
+                                    <FileCode className="h-3.5 w-3.5 text-foreground shrink-0" />
+                                    <span className="truncate">{file.filepath}</span>
+                                    <span className="text-[9px] px-1.5 bg-foreground/8 uppercase shrink-0 font-mono">{file.status}</span>
+                                    {file.additions !== undefined && <span className="text-emerald-500 shrink-0 font-bold text-[10px]">+{file.additions}</span>}
+                                    {file.deletions !== undefined && <span className="text-red-500 shrink-0 font-bold text-[10px]">-{file.deletions}</span>}
+                                  </p>
+                                ))
+                              ) : (
+                                <p className="text-[11px] italic">No changed files detected.</p>
+                              )}
                             </div>
                           </div>
                         </div>
-                      )}
 
-                      {/* TAB 3: DIFF ANALYSIS */}
-                      {selectedSubTab === "diff" && (
-                        <div className="space-y-6">
-                          {/* Comparative Config */}
-                          <div className="border border-border p-4 bg-muted/5 space-y-4">
-                            <h3 className="text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b border-border pb-2 text-foreground">
-                              <GitBranch className="h-3.5 w-3.5" />
-                              <span>compareBranches() & getPullRequestDiffStats()</span>
-                            </h3>
-                            <div className="flex flex-wrap items-center gap-3">
-                              <div className="flex items-center gap-1 bg-background border border-border px-2 py-1">
-                                <span className="text-[9px] uppercase text-muted-foreground">Base:</span>
-                                <input 
-                                  value={compareBase}
-                                  onChange={(e) => setCompareBase(e.target.value)}
-                                  className="bg-transparent border-none focus:outline-none w-[60px] text-xs"
-                                />
-                              </div>
-                              <span className="text-muted-foreground">←</span>
-                              <div className="flex items-center gap-1 bg-background border border-border px-2 py-1">
-                                <span className="text-[9px] uppercase text-muted-foreground">Head:</span>
-                                <input 
-                                  value={compareHead}
-                                  onChange={(e) => setCompareHead(e.target.value)}
-                                  className="bg-transparent border-none focus:outline-none w-[160px] text-xs"
-                                />
-                              </div>
-                              <Button 
-                                onClick={() => {
-                                  toast.success(`[GitHub] compared branches successfully. Found: 3 commits, 2 files changed.`);
-                                }}
-                                className="rounded-none text-[10px] uppercase font-mono tracking-wider bg-foreground text-background hover:bg-neutral-800"
-                              >
-                                Run compareBranches()
-                              </Button>
-                            </div>
+                        {/* AI RAG */}
+                        <div className={PANEL_CLS}>
+                          <h3 className={PANEL_HDR}>
+                            <span>Generate AI Review — RAG (Pinecone + Gemini)</span>
+                          </h3>
+                          <p className="text-sm text-muted-foreground leading-relaxed font-sans font-normal">
+                            Fetches the PR's unified diff from GitHub, chunks and vector-indexes it in Pinecone, runs retrieval query matches, analyzes with Gemini, and submits inline comments back to GitHub.
+                          </p>
+                          <Button
+                            onClick={async () => {
+                              if (!selectedPrNumber) { toast.warning("Please select a pull request first"); return; }
+                              setIsGeneratingReview(true);
+                              try {
+                                const res = await fetch("/api/github/pulls/review", {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ repoFullName: selectedRepo, prNumber: selectedPrNumber }),
+                                });
+                                if (!res.ok) { const errData = await res.json(); throw new Error(errData.error || "Failed to generate AI review"); }
+                                const review = await res.json();
+                                toast.success(`[AI Auditor] Review generated. Status: ${review.status.toUpperCase()}. Comments submitted to GitHub.`);
+                              } catch (err: any) {
+                                toast.error(`AI Audit failed: ${err.message}`);
+                              } finally { setIsGeneratingReview(false); }
+                            }}
+                            disabled={isGeneratingReview || !selectedPrNumber}
+                            className={`${BTN_MONO} w-full h-10`}
+                          >
+                            {isGeneratingReview ? "Running RAG & AI Audit..." : "Run AI RAG Audit & Submit"}
+                          </Button>
+                        </div>
+
+                        {/* Manual Review */}
+                        <div className={PANEL_CLS}>
+                          <h3 className={PANEL_HDR}>
+                            <span>Manual Review & Sign-Off Override</span>
+                          </h3>
+                          <Textarea
+                            placeholder="Enter review comments / audit details..."
+                            value={reviewComment}
+                            onChange={(e) => setReviewComment(e.target.value)}
+                            className="rounded-none border-foreground/15 bg-background text-sm font-sans resize-none"
+                            rows={3}
+                          />
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              onClick={() => {
+                                if (!reviewComment.trim()) { toast.error("Please add a review comment first"); return; }
+                                toast.success(`[GitHub] createReview() on PR #${selectedPrNumber || 45}: "${reviewComment}"`);
+                                setReviewComment("");
+                              }}
+                              disabled={!selectedPrNumber}
+                              className="rounded-none text-[10px] uppercase font-mono tracking-widest bg-red-500/10 text-red-500 hover:bg-red-500/20 border border-red-500/20 h-9 px-4"
+                            >
+                              Request Changes
+                            </Button>
+                            <Button
+                              onClick={() => toast.success(`[GitHub] approveReview() PR #${selectedPrNumber || 45} approved.`)}
+                              disabled={!selectedPrNumber}
+                              className="rounded-none text-[10px] uppercase font-mono tracking-widest bg-emerald-600 text-white hover:bg-emerald-700 h-9 px-4"
+                            >
+                              Approve PR #{selectedPrNumber || 45}
+                            </Button>
                           </div>
+                        </div>
+                      </div>
+                    )}
 
-                          {/* Diff Output Panel */}
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between text-[10px] text-muted-foreground font-mono">
-                              <span>getPullRequestDiff() & getFileDiff() output:</span>
-                              <span className="text-emerald-500 font-bold">+128 lines / -12 lines</span>
+                    {/* TAB 3: DIFF ANALYSIS */}
+                    {selectedSubTab === "diff" && (
+                      <div className="space-y-5">
+                        <div className={PANEL_CLS}>
+                          <h3 className={PANEL_HDR}>
+                            <GitBranch className="h-3.5 w-3.5" />
+                            <span>compareBranches() · getPullRequestDiffStats()</span>
+                          </h3>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <div className="flex items-center gap-1 border border-foreground/15 px-2.5 py-1.5 bg-background">
+                              <span className={`${LABEL_CLS} mr-1`}>Base:</span>
+                              <input
+                                value={compareBase}
+                                onChange={(e) => setCompareBase(e.target.value)}
+                                className="bg-transparent border-none focus:outline-none w-[60px] text-xs font-mono"
+                              />
                             </div>
-                            <pre className="border border-border bg-black/60 p-4 text-[10px] font-mono text-emerald-400/90 whitespace-pre overflow-x-auto leading-relaxed h-[200px]">
+                            <span className="text-muted-foreground text-sm">←</span>
+                            <div className="flex items-center gap-1 border border-foreground/15 px-2.5 py-1.5 bg-background">
+                              <span className={`${LABEL_CLS} mr-1`}>Head:</span>
+                              <input
+                                value={compareHead}
+                                onChange={(e) => setCompareHead(e.target.value)}
+                                className="bg-transparent border-none focus:outline-none w-[160px] text-xs font-mono"
+                              />
+                            </div>
+                            <Button
+                              onClick={() => toast.success("[GitHub] compareBranches() → Found: 3 commits, 2 files changed.")}
+                              className={`${BTN_MONO} h-8 px-4`}
+                            >
+                              Run compareBranches()
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-[10px] text-muted-foreground font-mono px-1">
+                            <span>getPullRequestDiff() output:</span>
+                            <span className="text-emerald-500 font-bold">+128 / -12 lines</span>
+                          </div>
+                          <pre className="border border-foreground/10 bg-foreground/[0.02] p-4 text-[10px] font-mono text-emerald-400/90 whitespace-pre overflow-x-auto leading-relaxed h-[200px]">
 {`diff --git a/apps/web/app/page.tsx b/apps/web/app/page.tsx
 index 8fd34b9..c298fe2 100644
 --- a/apps/web/app/page.tsx
@@ -1079,231 +984,169 @@ index 8fd34b9..c298fe2 100644
 +      </div>
    );
  }`}
-                            </pre>
+                          </pre>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* TAB 4: PUSH/PULL */}
+                    {selectedSubTab === "ops" && (
+                      <div className="space-y-5">
+                        <div className={PANEL_CLS}>
+                          <h3 className={PANEL_HDR}>
+                            <GitCommit className="h-3.5 w-3.5" />
+                            <span>pushCommit()</span>
+                          </h3>
+                          <div className="flex items-center gap-2">
+                            <Input
+                              placeholder="Commit message (e.g. feat: integrate home page)"
+                              value={commitMessage}
+                              onChange={(e) => setCommitMessage(e.target.value)}
+                              className="rounded-none border-foreground/15 bg-background text-sm h-9"
+                            />
+                            <Button
+                              onClick={() => {
+                                if (!commitMessage.trim()) { toast.error("Commit message is required"); return; }
+                                toast.success(`[Git] pushCommit() → Pushed 4c89b2a to heads/${compareHead}`);
+                                setCommitMessage("");
+                              }}
+                              className={`${BTN_MONO} h-9 px-4 shrink-0`}
+                            >
+                              pushCommit()
+                            </Button>
                           </div>
                         </div>
-                      )}
 
-                      {/* TAB 4: PUSH/PULL OPERATIONS */}
-                      {selectedSubTab === "ops" && (
-                        <div className="space-y-6">
-                          <div className="border border-border p-4 bg-muted/5 space-y-4">
-                            <h3 className="text-xs font-bold uppercase tracking-wider flex items-center gap-2 border-b border-border pb-2 text-foreground">
-                              <GitCommit className="h-3.5 w-3.5" />
-                              <span>pushCommit()</span>
-                            </h3>
-                            <div className="flex items-center gap-2">
-                              <Input 
-                                placeholder="Commit message (e.g. feat: integrate home page)" 
-                                value={commitMessage}
-                                onChange={(e) => setCommitMessage(e.target.value)}
-                                className="rounded-none border-border bg-background text-xs"
-                              />
-                              <Button 
-                                onClick={() => {
-                                  if (!commitMessage.trim()) {
-                                    toast.error("Commit message is required");
-                                    return;
-                                  }
-                                  toast.success(`[Git] pushCommit() SUCCESS. Pushed commit 4c89b2a to remote ref: heads/${compareHead}`);
-                                  setCommitMessage("");
-                                }}
-                                className="rounded-none text-[10px] uppercase font-mono tracking-wider bg-foreground text-background hover:bg-neutral-800 shrink-0"
-                              >
-                                pushCommit()
-                              </Button>
-                            </div>
-                          </div>
-
-                          {/* Remote operations triggers */}
-                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="border border-border p-4 bg-muted/5 space-y-3">
-                              <h4 className="text-[11px] font-bold uppercase flex items-center gap-1.5 text-foreground">
-                                <RefreshCw className="h-3.5 w-3.5" />
-                                <span>fetchLatestCommits()</span>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-px bg-foreground/8">
+                          {[
+                            { icon: <RefreshCw className="h-3.5 w-3.5" />, fn: "fetchLatestCommits()", desc: "Checks for remote revisions on main.", action: () => toast.success("[Git] fetchLatestCommits() → Workspace fully synced with origin."), label: "Fetch" },
+                            { icon: <ArrowRight className="h-3.5 w-3.5 rotate-90" />, fn: "pullLatestChanges()", desc: "Pulls latest origin commits to local repo.", action: () => toast.success("[Git] pullLatestChanges() → Pull complete. 0 files modified."), label: "Pull" },
+                            { icon: <RefreshCw className="h-3.5 w-3.5" />, fn: "syncForkedRepository()", desc: "Sync upstream updates to fork.", action: () => toast.success("[GitHub] syncForkedRepository() → Upstream main synced."), label: "Sync Fork" },
+                          ].map((item, i) => (
+                            <div key={i} className={`${PANEL_CLS} space-y-3`}>
+                              <h4 className="text-[10px] font-mono font-bold uppercase flex items-center gap-1.5 text-foreground">
+                                {item.icon}
+                                <span>{item.fn}</span>
                               </h4>
-                              <p className="text-[10px] text-muted-foreground font-sans">
-                                Checks for remote revisions on main.
-                              </p>
-                              <Button 
-                                onClick={() => {
-                                  toast.success("[Git] fetchLatestCommits(): Workspace is fully synced with origin.");
-                                }}
-                                variant="outline"
-                                className="rounded-none text-[10px] uppercase font-mono tracking-wider border-border hover:border-foreground"
-                              >
-                                Fetch
-                              </Button>
+                              <p className="text-[11px] text-muted-foreground font-sans font-normal">{item.desc}</p>
+                              <Button onClick={item.action} className={`${BTN_GHOST} h-8 px-4`}>{item.label}</Button>
                             </div>
-
-                            <div className="border border-border p-4 bg-muted/5 space-y-3">
-                              <h4 className="text-[11px] font-bold uppercase flex items-center gap-1.5 text-foreground">
-                                <ArrowRight className="h-3.5 w-3.5 rotate-90" />
-                                <span>pullLatestChanges()</span>
-                              </h4>
-                              <p className="text-[10px] text-muted-foreground font-sans">
-                                Pulls latest origin commits to local repo.
-                              </p>
-                              <Button 
-                                onClick={() => {
-                                  toast.success("[Git] pullLatestChanges(): Pull complete. 0 files modified.");
-                                }}
-                                variant="outline"
-                                className="rounded-none text-[10px] uppercase font-mono tracking-wider border-border hover:border-foreground"
-                              >
-                                Pull
-                              </Button>
-                            </div>
-
-                            <div className="border border-border p-4 bg-muted/5 space-y-3">
-                              <h4 className="text-[11px] font-bold uppercase flex items-center gap-1.5 text-foreground">
-                                <RefreshCw className="h-3.5 w-3.5" />
-                                <span>syncForkedRepository()</span>
-                              </h4>
-                              <p className="text-[10px] text-muted-foreground font-sans">
-                                Sync upstream updates.
-                              </p>
-                              <Button 
-                                onClick={() => {
-                                  toast.success("[GitHub] syncForkedRepository(): Upstream main synced.");
-                                }}
-                                variant="outline"
-                                className="rounded-none text-[10px] uppercase font-mono tracking-wider border-border hover:border-foreground"
-                              >
-                                Sync Fork
-                              </Button>
-                            </div>
-                          </div>
+                          ))}
                         </div>
-                      )}
+                      </div>
+                    )}
 
-                      {/* TAB 5: ANALYTICS */}
-                      {selectedSubTab === "analytics" && (
-                        <div className="space-y-7">
-                          {/* Top row stats: getCloneStats() and getViewStats() */}
-                          <div className="grid grid-cols-1 sm:grid-cols-4 gap-5">
-                            <div className="border border-border p-5 bg-muted/5 rounded-none text-center">
-                              <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold">getCloneStats() Clones</p>
-                              <p className="text-3xl font-black text-foreground mt-2">284</p>
-                              <span className="text-xs text-emerald-500 font-bold font-sans mt-1 block">14-Day Traffic</span>
+                    {/* TAB 5: ANALYTICS */}
+                    {selectedSubTab === "analytics" && (
+                      <div className="space-y-5">
+                        {/* Stat bento */}
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-foreground/8">
+                          {[
+                            { fn: "getCloneStats()", label: "Clones",    value: "284",   sub: "14-Day Traffic",  ok: true },
+                            { fn: "getCloneStats()", label: "Cloners",   value: "94",    sub: "Unique Profiles", ok: false },
+                            { fn: "getViewStats()",  label: "Pageviews", value: "1,294", sub: "Views (14 Days)", ok: true },
+                            { fn: "getViewStats()",  label: "Visitors",  value: "394",   sub: "Unique Hosts",    ok: false },
+                          ].map((stat, i) => (
+                            <div key={i} className="bg-background p-5 text-center space-y-2">
+                              <p className={`${LABEL_CLS} leading-tight`}>{stat.fn}<br />{stat.label}</p>
+                              <p className="text-4xl font-black text-foreground leading-none">{stat.value}</p>
+                              <span className={`text-[10px] font-mono block ${stat.ok ? "text-emerald-500" : "text-muted-foreground"}`}>{stat.sub}</span>
                             </div>
-                            <div className="border border-border p-5 bg-muted/5 rounded-none text-center">
-                              <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold">getCloneStats() Cloners</p>
-                              <p className="text-3xl font-black text-foreground mt-2">94</p>
-                              <span className="text-xs text-muted-foreground font-bold font-sans mt-1 block">Unique Profiles</span>
-                            </div>
-                            <div className="border border-border p-5 bg-muted/5 rounded-none text-center">
-                              <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold">getViewStats() Pageviews</p>
-                              <p className="text-3xl font-black text-foreground mt-2">1,294</p>
-                              <span className="text-xs text-emerald-500 font-bold font-sans mt-1 block">Views (14 Days)</span>
-                            </div>
-                            <div className="border border-border p-5 bg-muted/5 rounded-none text-center">
-                              <p className="text-xs uppercase tracking-wider text-muted-foreground font-bold">getViewStats() Visitors</p>
-                              <p className="text-3xl font-black text-foreground mt-2">394</p>
-                              <span className="text-xs text-muted-foreground font-bold font-sans mt-1 block">Unique Hosts</span>
-                            </div>
-                          </div>
+                          ))}
+                        </div>
 
-                          {/* getContributionStats() and getCodeFrequency() */}
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                            {/* Commits Bar Chart */}
-                            <div className="border border-border p-6 bg-muted/5 space-y-4">
-                              <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                                <BarChart2 className="h-4 w-4" />
-                                <span>getContributionStats() - Commits (Last 7 Days)</span>
-                              </h4>
-                              <div className="h-32 flex items-end gap-2 pt-4">
-                                {[12, 19, 3, 5, 2, 24, 15].map((val, idx) => (
-                                  <div key={idx} className="flex-1 flex flex-col items-center gap-1">
-                                    <div 
-                                      className="w-full bg-foreground hover:bg-neutral-800 transition-all cursor-pointer"
-                                      style={{ height: `${(val / 25) * 100}px` }}
-                                      title={`${val} commits`}
-                                    />
-                                    <span className="text-[8px] text-muted-foreground uppercase">Day {idx + 1}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-
-                            {/* Code Frequency (Additions vs Deletions) */}
-                            <div className="border border-border p-6 bg-muted/5 space-y-4">
-                              <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                                <TrendingUp className="h-4 w-4" />
-                                <span>getCodeFrequency() - Volume (Last 14 Days)</span>
-                              </h4>
-                              <div className="space-y-4 pt-2">
-                                <div className="space-y-2">
-                                  <div className="flex justify-between text-xs">
-                                    <span className="text-emerald-500 font-bold uppercase">Additions</span>
-                                    <span>+12,482 lines</span>
-                                  </div>
-                                  <div className="w-full h-2.5 bg-muted/20 border border-border">
-                                    <div className="bg-emerald-500 h-full w-[76%]" />
-                                  </div>
-                                </div>
-                                <div className="space-y-2">
-                                  <div className="flex justify-between text-xs">
-                                    <span className="text-red-500 font-bold uppercase">Deletions</span>
-                                    <span>-3,921 lines</span>
-                                  </div>
-                                  <div className="w-full h-2.5 bg-muted/20 border border-border">
-                                    <div className="bg-red-500 h-full w-[24%]" />
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* getPunchCard() */}
-                          <div className="border border-border p-6 bg-muted/5 space-y-4">
-                            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                              <Calendar className="h-4 w-4" />
-                              <span>getPunchCard() - Commit Frequency Density</span>
+                        {/* Charts */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-foreground/8">
+                          {/* Commits bar */}
+                          <div className={`${PANEL_CLS} space-y-4`}>
+                            <h4 className={PANEL_HDR}>
+                              <BarChart2 className="h-3.5 w-3.5" />
+                              <span>getContributionStats() — Last 7 Days</span>
                             </h4>
-                            <div className="overflow-x-auto pt-2">
-                              <div className="min-w-[480px] grid grid-rows-7 gap-1 font-mono text-[9px]">
-                                {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, dIdx) => (
-                                  <div key={day} className="flex items-center gap-1.5">
-                                    <span className="w-8 text-muted-foreground font-bold uppercase shrink-0">{day}</span>
-                                    <div className="flex-1 flex gap-1">
-                                      {Array.from({ length: 24 }).map((_, hIdx) => {
-                                        // Fake punch card density
-                                        const val = (dIdx * hIdx) % 5;
-                                        const colorClass = 
-                                          val === 4 ? "bg-emerald-500" :
-                                          val === 3 ? "bg-emerald-600/80" :
-                                          val === 2 ? "bg-emerald-700/60" :
-                                          val === 1 ? "bg-emerald-800/30" : "bg-muted/10";
-                                        return (
-                                          <div 
-                                            key={hIdx} 
-                                            className={`flex-1 aspect-square border border-border/20 ${colorClass}`}
-                                            title={`${day} @ ${hIdx}:00 -> commits density: ${val}`}
-                                          />
-                                        );
-                                      })}
-                                    </div>
+                            <div className="h-32 flex items-end gap-1.5 pt-4">
+                              {[12, 19, 3, 5, 2, 24, 15].map((val, idx) => (
+                                <div key={idx} className="flex-1 flex flex-col items-center gap-1">
+                                  <div
+                                    className="w-full bg-foreground hover:bg-foreground/70 transition-all cursor-pointer"
+                                    style={{ height: `${(val / 25) * 100}px` }}
+                                    title={`${val} commits`}
+                                  />
+                                  <span className="text-[8px] text-muted-foreground font-mono">D{idx + 1}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* Code frequency */}
+                          <div className={`${PANEL_CLS} space-y-4`}>
+                            <h4 className={PANEL_HDR}>
+                              <TrendingUp className="h-3.5 w-3.5" />
+                              <span>getCodeFrequency() — 14 Days</span>
+                            </h4>
+                            <div className="space-y-4 pt-1">
+                              {[
+                                { label: "Additions", value: "+12,482 lines", pct: "76%", color: "bg-emerald-500", cls: "text-emerald-500" },
+                                { label: "Deletions", value: "-3,921 lines",  pct: "24%", color: "bg-red-500",     cls: "text-red-500" },
+                              ].map((row, i) => (
+                                <div key={i} className="space-y-1.5">
+                                  <div className="flex justify-between text-xs font-mono">
+                                    <span className={`font-bold uppercase ${row.cls}`}>{row.label}</span>
+                                    <span className="text-muted-foreground">{row.value}</span>
                                   </div>
-                                ))}
-                              </div>
-                              <div className="flex justify-between text-[8px] text-muted-foreground uppercase pt-2 max-w-[480px] ml-10">
-                                <span>12 AM</span>
-                                <span>6 AM</span>
-                                <span>12 PM</span>
-                                <span>6 PM</span>
-                              </div>
+                                  <div className="w-full h-2 bg-foreground/8 border border-foreground/8">
+                                    <div className={`${row.color} h-full`} style={{ width: row.pct }} />
+                                  </div>
+                                </div>
+                              ))}
                             </div>
                           </div>
                         </div>
-                      )}
-                    </CardContent>
 
-                    <CardFooter className="border-t border-border bg-muted/10 p-4 text-xs text-muted-foreground font-sans flex items-center gap-2.5">
-                      <Terminal className="h-4 w-4 text-muted-foreground shrink-0" />
-                      <span>Ready for git callbacks on selectedRepo. Listening to webhook payloads...</span>
-                    </CardFooter>
-                  </Card>
+                        {/* Punch card */}
+                        <div className={`${PANEL_CLS} space-y-4`}>
+                          <h4 className={PANEL_HDR}>
+                            <Calendar className="h-3.5 w-3.5" />
+                            <span>getPunchCard() — Commit Frequency Density</span>
+                          </h4>
+                          <div className="overflow-x-auto">
+                            <div className="min-w-[480px] grid grid-rows-7 gap-1 font-mono text-[9px]">
+                              {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day, dIdx) => (
+                                <div key={day} className="flex items-center gap-1.5">
+                                  <span className="w-7 text-muted-foreground font-bold uppercase shrink-0">{day}</span>
+                                  <div className="flex-1 flex gap-0.5">
+                                    {Array.from({ length: 24 }).map((_, hIdx) => {
+                                      const val = (dIdx * hIdx) % 5;
+                                      const colorClass =
+                                        val === 4 ? "bg-emerald-500" :
+                                        val === 3 ? "bg-emerald-600/80" :
+                                        val === 2 ? "bg-emerald-700/60" :
+                                        val === 1 ? "bg-emerald-800/30" : "bg-foreground/6";
+                                      return (
+                                        <div
+                                          key={hIdx}
+                                          className={`flex-1 aspect-square ${colorClass}`}
+                                          title={`${day} @ ${hIdx}:00 → density: ${val}`}
+                                        />
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                            <div className="flex justify-between text-[8px] text-muted-foreground font-mono uppercase pt-2 max-w-[480px] ml-9">
+                              <span>12 AM</span><span>6 AM</span><span>12 PM</span><span>6 PM</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Console footer */}
+                  <div className="border-t border-foreground/8 px-6 py-3 flex items-center gap-2 text-[10px] text-muted-foreground font-mono bg-foreground/[0.01]">
+                    <Terminal className="h-3.5 w-3.5 shrink-0" />
+                    <span className="terminal-cursor">Ready for git callbacks on {selectedRepo}. Listening to webhook payloads</span>
+                  </div>
                 </div>
               </div>
             )}

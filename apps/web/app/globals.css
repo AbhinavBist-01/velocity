@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&family=JetBrains+Mono:ital,wght@0,100..800;1,100..800&display=swap');
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -6,7 +6,7 @@
 
 @theme inline {
   --font-sans: "Inter", var(--font-font-geist-sans), var(--font-geist-sans), system-ui, sans-serif;
-  --font-mono: var(--font-font-geist-mono), var(--font-geist-mono), monospace;
+  --font-mono: "JetBrains Mono", var(--font-font-geist-mono), var(--font-geist-mono), monospace;
   --radius-sm: 0px;
   --radius-md: 2px;
   --radius-lg: 4px;
@@ -122,29 +122,58 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground transition-colors duration-300 antialiased font-sans tracking-tight;
+    @apply bg-background text-foreground transition-colors duration-300 antialiased font-sans;
+    font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+    text-rendering: optimizeLegibility;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply tracking-tighter text-balance font-black;
+    letter-spacing: -0.03em;
+  }
+  /* Code and monospace elements use JetBrains Mono */
+  code, kbd, samp, pre, .font-mono {
+    font-family: "JetBrains Mono", var(--font-geist-mono), monospace;
+    font-feature-settings: "calt" 1, "liga" 1;
   }
 }
 
 /* Custom design aesthetics and grids */
 .bg-grid-dots {
-  background-image: radial-gradient(var(--border) 1px, transparent 1px);
-  background-size: 24px 24px;
+  /* Tighter, more technical dot grid — precision instrument feel */
+  background-image: radial-gradient(color-mix(in srgb, var(--foreground) 12%, transparent) 1px, transparent 1px);
+  background-size: 20px 20px;
 }
 
 .bg-grid-dots-light {
-  background-image: radial-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-image: radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px);
   background-size: 20px 20px;
 }
 
 .bg-grid-lines {
   background-image: 
-    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
-  background-size: 40px 40px;
+    linear-gradient(color-mix(in srgb, var(--foreground) 3%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--foreground) 3%, transparent) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* Fine crosshair grid — engineering blueprint feel */
+.bg-grid-crosshair {
+  background-image:
+    linear-gradient(color-mix(in srgb, var(--foreground) 5%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--foreground) 5%, transparent) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+/* Code surface — terminal panel background */
+.code-surface {
+  background: color-mix(in srgb, var(--foreground) 3%, var(--background));
+  border: 1px solid color-mix(in srgb, var(--foreground) 12%, transparent);
+  font-family: "JetBrains Mono", monospace;
+}
+
+/* Hairline divider */
+.hairline {
+  border-color: color-mix(in srgb, var(--foreground) 10%, transparent);
 }
 
 .brutalist-border-double {
@@ -185,6 +214,49 @@ input:focus, textarea:focus, select:focus {
 .hover-slide-right:hover {
   transform: translateX(4px);
 }
+
+/* Staggered fade-up for section reveals */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-up {
+  animation: fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.animate-fade-up-1 { animation: fade-up 0.5s 0.05s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-fade-up-2 { animation: fade-up 0.5s 0.10s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-fade-up-3 { animation: fade-up 0.5s 0.15s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-fade-up-4 { animation: fade-up 0.5s 0.20s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* Terminal cursor blink */
+@keyframes terminal-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+.terminal-cursor::after {
+  content: '█';
+  display: inline-block;
+  margin-left: 2px;
+  font-size: 0.75em;
+  animation: terminal-blink 1s step-end infinite;
+  color: var(--foreground);
+}
+
+/* Underline grow on hover */
+.underline-grow {
+  position: relative;
+}
+.underline-grow::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: var(--foreground);
+  transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.underline-grow:hover::after { width: 100%; }
 
 /* ─── Smooth theme transition on every element ───────────────────────── */
 *,
@@ -238,9 +310,9 @@ input:focus, textarea:focus, select:focus {
 /* ─── Glow accent for hero ────────────────────────────────────────────── */
 .hero-glow {
   background: radial-gradient(
-    ellipse 60% 40% at 50% 0%,
-    color-mix(in srgb, var(--foreground) 6%, transparent) 0%,
-    transparent 70%
+    ellipse 50% 35% at 50% 0%,
+    color-mix(in srgb, var(--foreground) 5%, transparent) 0%,
+    transparent 65%
   );
 }
 
