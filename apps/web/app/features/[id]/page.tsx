@@ -19,6 +19,7 @@ import { Progress } from "~/components/ui/progress";
 import { toast } from "sonner";
 import { Spinner } from "~/components/ui/spinner";
 import { useLogout } from "~/hooks/api/auth";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "~/components/ui/dialog";
 
 export default function FeaturePipeline() {
   const params = useParams();
@@ -989,162 +990,158 @@ export default function FeaturePipeline() {
               )}
 
               {/* Add Custom Task Modal */}
-              {showCreateModal && (
-                <div className="fixed inset-0 bg-background/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-                  <div className="border border-border bg-card p-6 w-full max-w-md font-mono text-xs space-y-4 shadow-2xl relative">
-                    <Button 
-                      variant="ghost"
-                      size="icon" 
-                      className="absolute top-2 right-2 h-6 w-6 rounded-none border border-border text-muted-foreground hover:text-foreground hover:bg-background"
-                      onClick={() => setShowCreateModal(false)}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                    <div className="flex items-center gap-2 border-b border-border pb-2">
-                      <Kanban className="h-4 w-4 text-foreground" />
-                      <h3 className="text-sm font-bold uppercase tracking-tight">Create Developer Ticket</h3>
+              <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
+                <DialogContent showCloseButton={false} className="rounded-none border-border bg-card p-6 w-full max-w-md font-mono text-xs space-y-4 shadow-2xl relative select-none">
+                  <Button 
+                    variant="ghost"
+                    size="icon" 
+                    className="absolute top-2 right-2 h-6 w-6 rounded-none border border-border text-muted-foreground hover:text-foreground hover:bg-background"
+                    onClick={() => setShowCreateModal(false)}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                  <DialogHeader className="flex flex-row items-center gap-2 border-b border-border pb-2 space-y-0 text-left">
+                    <Kanban className="h-4 w-4 text-foreground" />
+                    <DialogTitle className="text-sm font-bold uppercase tracking-tight font-mono">Create Developer Ticket</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-muted-foreground uppercase font-bold">Ticket Title</label>
+                      <Input 
+                        value={newTaskTitle}
+                        onChange={(e) => setNewTaskTitle(e.target.value)}
+                        placeholder="e.g. Implement user login routes"
+                        className="rounded-none border-border focus-visible:ring-1 focus-visible:ring-foreground bg-background text-xs font-mono"
+                      />
                     </div>
-                    <div className="space-y-3">
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-muted-foreground uppercase font-bold">Ticket Title</label>
-                        <Input 
-                          value={newTaskTitle}
-                          onChange={(e) => setNewTaskTitle(e.target.value)}
-                          placeholder="e.g. Implement user login routes"
-                          className="rounded-none border-border focus-visible:ring-1 focus-visible:ring-foreground bg-background text-xs font-mono"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-muted-foreground uppercase font-bold">Description</label>
-                        <Textarea 
-                          value={newTaskDescription}
-                          onChange={(e) => setNewTaskDescription(e.target.value)}
-                          placeholder="Describe acceptance criteria & details..."
-                          rows={3}
-                          className="rounded-none border-border focus-visible:ring-1 focus-visible:ring-foreground bg-background text-xs font-mono"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-muted-foreground uppercase font-bold">Priority</label>
-                        <select 
-                          value={newTaskPriority}
-                          onChange={(e) => setNewTaskPriority(e.target.value)}
-                          className="w-full border border-border rounded-none bg-background text-xs font-mono p-2 focus-visible:outline-none focus-visible:border-foreground"
-                        >
-                          <option value="high">High</option>
-                          <option value="medium">Medium</option>
-                          <option value="low">Low</option>
-                        </select>
-                      </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-muted-foreground uppercase font-bold">Description</label>
+                      <Textarea 
+                        value={newTaskDescription}
+                        onChange={(e) => setNewTaskDescription(e.target.value)}
+                        placeholder="Describe acceptance criteria & details..."
+                        rows={3}
+                        className="rounded-none border-border focus-visible:ring-1 focus-visible:ring-foreground bg-background text-xs font-mono"
+                      />
                     </div>
-                    <div className="flex justify-end gap-2 border-t border-border pt-4">
-                      <Button 
-                        variant="outline" 
-                        onClick={() => setShowCreateModal(false)}
-                        className="rounded-none text-[10px] uppercase font-mono tracking-wider border-border hover:border-foreground"
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-muted-foreground uppercase font-bold">Priority</label>
+                      <select 
+                        value={newTaskPriority}
+                        onChange={(e) => setNewTaskPriority(e.target.value)}
+                        className="w-full border border-border rounded-none bg-background text-xs font-mono p-2 focus-visible:outline-none focus-visible:border-foreground"
                       >
-                        Cancel
-                      </Button>
-                      <Button 
-                        onClick={() => {
-                          if (!newTaskTitle.trim()) {
-                            toast.error("Title is required");
-                            return;
-                          }
-                          createTaskMutation.mutate({
-                            featureId,
-                            title: newTaskTitle,
-                            description: newTaskDescription,
-                            priority: newTaskPriority
-                          });
-                        }}
-                        disabled={createTaskMutation.isPending}
-                        className="rounded-none text-[10px] bg-foreground text-background hover:bg-neutral-800 uppercase font-mono tracking-wider"
-                      >
-                        {createTaskMutation.isPending ? "Creating..." : "Create Ticket"}
-                      </Button>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                      </select>
                     </div>
                   </div>
-                </div>
-              )}
+                  <div className="flex justify-end gap-2 border-t border-border pt-4">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setShowCreateModal(false)}
+                      className="rounded-none text-[10px] uppercase font-mono tracking-wider border-border hover:border-foreground"
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={() => {
+                        if (!newTaskTitle.trim()) {
+                          toast.error("Title is required");
+                          return;
+                        }
+                        createTaskMutation.mutate({
+                          featureId,
+                          title: newTaskTitle,
+                          description: newTaskDescription,
+                          priority: newTaskPriority
+                        });
+                      }}
+                      disabled={createTaskMutation.isPending}
+                      className="rounded-none text-[10px] bg-foreground text-background hover:bg-neutral-800 uppercase font-mono tracking-wider"
+                    >
+                      {createTaskMutation.isPending ? "Creating..." : "Create Ticket"}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
 
               {/* Edit Task Modal */}
-              {editingTask && (
-                <div className="fixed inset-0 bg-background/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
-                  <div className="border border-border bg-card p-6 w-full max-w-md font-mono text-xs space-y-4 shadow-2xl relative">
-                    <Button 
-                      variant="ghost"
-                      size="icon" 
-                      className="absolute top-2 right-2 h-6 w-6 rounded-none border border-border text-muted-foreground hover:text-foreground hover:bg-background"
-                      onClick={() => setEditingTask(null)}
-                    >
-                      <X className="h-3 w-3" />
-                    </Button>
-                    <div className="flex items-center gap-2 border-b border-border pb-2">
-                      <Edit3 className="h-4 w-4 text-foreground" />
-                      <h3 className="text-sm font-bold uppercase tracking-tight">Edit Developer Ticket</h3>
+              <Dialog open={!!editingTask} onOpenChange={(open) => { if (!open) setEditingTask(null); }}>
+                <DialogContent showCloseButton={false} className="rounded-none border-border bg-card p-6 w-full max-w-md font-mono text-xs space-y-4 shadow-2xl relative select-none">
+                  <Button 
+                    variant="ghost"
+                    size="icon" 
+                    className="absolute top-2 right-2 h-6 w-6 rounded-none border border-border text-muted-foreground hover:text-foreground hover:bg-background"
+                    onClick={() => setEditingTask(null)}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                  <DialogHeader className="flex flex-row items-center gap-2 border-b border-border pb-2 space-y-0 text-left">
+                    <Edit3 className="h-4 w-4 text-foreground" />
+                    <DialogTitle className="text-sm font-bold uppercase tracking-tight font-mono">Edit Developer Ticket</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-3">
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-muted-foreground uppercase font-bold">Ticket Title</label>
+                      <Input 
+                        value={editTaskTitle}
+                        onChange={(e) => setEditTaskTitle(e.target.value)}
+                        className="rounded-none border-border focus-visible:ring-1 focus-visible:ring-foreground bg-background text-xs font-mono"
+                      />
                     </div>
-                    <div className="space-y-3">
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-muted-foreground uppercase font-bold">Ticket Title</label>
-                        <Input 
-                          value={editTaskTitle}
-                          onChange={(e) => setEditTaskTitle(e.target.value)}
-                          className="rounded-none border-border focus-visible:ring-1 focus-visible:ring-foreground bg-background text-xs font-mono"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-muted-foreground uppercase font-bold">Description</label>
-                        <Textarea 
-                          value={editTaskDescription}
-                          onChange={(e) => setEditTaskDescription(e.target.value)}
-                          rows={3}
-                          className="rounded-none border-border focus-visible:ring-1 focus-visible:ring-foreground bg-background text-xs font-mono"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-[10px] text-muted-foreground uppercase font-bold">Priority</label>
-                        <select 
-                          value={editTaskPriority}
-                          onChange={(e) => setEditTaskPriority(e.target.value)}
-                          className="w-full border border-border rounded-none bg-background text-xs font-mono p-2 focus-visible:outline-none focus-visible:border-foreground"
-                        >
-                          <option value="high">High</option>
-                          <option value="medium">Medium</option>
-                          <option value="low">Low</option>
-                        </select>
-                      </div>
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-muted-foreground uppercase font-bold">Description</label>
+                      <Textarea 
+                        value={editTaskDescription}
+                        onChange={(e) => setEditTaskDescription(e.target.value)}
+                        rows={3}
+                        className="rounded-none border-border focus-visible:ring-1 focus-visible:ring-foreground bg-background text-xs font-mono"
+                      />
                     </div>
-                    <div className="flex justify-end gap-2 border-t border-border pt-4">
-                      <Button 
-                        variant="outline" 
-                        onClick={() => setEditingTask(null)}
-                        className="rounded-none text-[10px] uppercase font-mono tracking-wider border-border hover:border-foreground"
+                    <div className="space-y-1">
+                      <label className="text-[10px] text-muted-foreground uppercase font-bold">Priority</label>
+                      <select 
+                        value={editTaskPriority}
+                        onChange={(e) => setEditTaskPriority(e.target.value)}
+                        className="w-full border border-border rounded-none bg-background text-xs font-mono p-2 focus-visible:outline-none focus-visible:border-foreground"
                       >
-                        Cancel
-                      </Button>
-                      <Button 
-                        onClick={() => {
-                          if (!editTaskTitle.trim()) {
-                            toast.error("Title is required");
-                            return;
-                          }
-                          updateTaskDetailsMutation.mutate({
-                            taskId: editingTask.id,
-                            title: editTaskTitle,
-                            description: editTaskDescription,
-                            priority: editTaskPriority
-                          });
-                        }}
-                        disabled={updateTaskDetailsMutation.isPending}
-                        className="rounded-none text-[10px] bg-foreground text-background hover:bg-neutral-800 uppercase font-mono tracking-wider"
-                      >
-                        {updateTaskDetailsMutation.isPending ? "Saving..." : "Save Changes"}
-                      </Button>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                      </select>
                     </div>
                   </div>
-                </div>
-              )}
+                  <div className="flex justify-end gap-2 border-t border-border pt-4">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => setEditingTask(null)}
+                      className="rounded-none text-[10px] uppercase font-mono tracking-wider border-border hover:border-foreground"
+                    >
+                      Cancel
+                    </Button>
+                    <Button 
+                      onClick={() => {
+                        if (!editTaskTitle.trim()) {
+                          toast.error("Title is required");
+                          return;
+                        }
+                        updateTaskDetailsMutation.mutate({
+                          taskId: editingTask.id,
+                          title: editTaskTitle,
+                          description: editTaskDescription,
+                          priority: editTaskPriority
+                        });
+                      }}
+                      disabled={updateTaskDetailsMutation.isPending}
+                      className="rounded-none text-[10px] bg-foreground text-background hover:bg-neutral-800 uppercase font-mono tracking-wider"
+                    >
+                      {updateTaskDetailsMutation.isPending ? "Saving..." : "Save Changes"}
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
             </div>
           )}
 
