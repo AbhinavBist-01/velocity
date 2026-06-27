@@ -32,7 +32,7 @@ function ThemeToggle() {
         aria-label="Toggle theme"
         className="relative h-9 w-9 flex items-center justify-center border border-foreground/15 hover:border-foreground/40 transition-all duration-200"
       >
-        <span className="h-4 w-4" />
+        <Sun className="h-[15px] w-[15px] text-foreground/30 animate-pulse" />
       </button>
     );
   }
@@ -243,9 +243,9 @@ export default function LandingPage() {
           <div className="border-b border-foreground/10 px-5 py-3 flex items-center justify-between bg-foreground/[0.02]">
             <div className="flex items-center gap-2">
               <div className="flex gap-1.5">
-                <span className="h-2.5 w-2.5 rounded-full bg-foreground/10 border border-foreground/10" />
-                <span className="h-2.5 w-2.5 rounded-full bg-foreground/10 border border-foreground/10" />
-                <span className="h-2.5 w-2.5 rounded-full bg-foreground/10 border border-foreground/10" />
+                <span className="h-2.5 w-2.5 rounded-full bg-red-500/20 border border-red-500/30" />
+                <span className="h-2.5 w-2.5 rounded-full bg-amber-500/20 border border-amber-500/30" />
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-500/20 border border-emerald-500/30" />
               </div>
               <span className="text-[10px] font-mono text-muted-foreground ml-2 hidden sm:block">velocity-app/features/stripe-checkout</span>
             </div>

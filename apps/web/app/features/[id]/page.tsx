@@ -463,6 +463,7 @@ export default function FeaturePipeline() {
             .filter(s => !s.title.toLowerCase().includes("problem") && !s.title.toLowerCase().includes("statement") && !s.title.toLowerCase().includes("intake") && !s.isTechnical)
             .map(sec => {
               const points = getCleanPoints(sec.content);
+              if (points.length === 0) return null;
               return (
                 <div key={sec.title} className="p-5 border border-border bg-card/40 space-y-4 hover-blur-item transition-all duration-300">
                   <div className="flex items-center gap-2 border-b border-border/50 pb-2">
@@ -932,8 +933,9 @@ export default function FeaturePipeline() {
                         ))}
                         
                         {columnTasks.length === 0 && (
-                          <div className="border border-dashed border-border/30 p-10 text-center text-muted-foreground/35 font-sans text-xs rounded-lg uppercase tracking-wider flex items-center justify-center min-h-[120px] bg-muted/[0.01]">
-                            Empty Column
+                          <div className="flex-1 border border-dashed border-foreground/10 p-8 text-center text-muted-foreground/30 font-mono text-[10px] rounded-lg uppercase tracking-widest flex flex-col items-center justify-center min-h-[220px] bg-foreground/[0.005]">
+                            <Kanban className="h-5 w-5 text-muted-foreground/20 mb-2" />
+                            <span>No Tickets</span>
                           </div>
                         )}
                       </div>
