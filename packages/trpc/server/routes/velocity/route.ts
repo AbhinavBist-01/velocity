@@ -97,6 +97,18 @@ export const velocityRouter = router({
       return velocityService.createProject(input.name, input.description, input.githubRepo);
     }),
 
+  deleteProject: protectedProcedure
+    .meta({ openapi: { method: "POST", path: "/velocity/projects/delete", tags: TAGS } })
+    .input(
+      z.object({
+        id: z.string().uuid(),
+      })
+    )
+    .output(z.object({ success: z.boolean() }))
+    .mutation(async ({ input }) => {
+      return velocityService.deleteProject(input.id);
+    }),
+
   getFeatureDetails: publicProcedure
     .meta({ openapi: { method: "GET", path: "/velocity/features/{id}", tags: TAGS } })
     .input(z.object({ id: z.string() }))
@@ -280,5 +292,21 @@ export const velocityRouter = router({
     }))
     .mutation(async ({ input }) => {
       return velocityService.shipFeature(input.featureId);
+    }),
+
+  getAllFeatures: publicProcedure
+    .meta({ openapi: { method: "GET", path: "/velocity/features/all", tags: TAGS } })
+    .input(zodUndefinedModel)
+    .output(z.array(z.any()))
+    .query(async () => {
+      return velocityService.getAllFeatures();
+    }),
+
+  getAllAiReviews: publicProcedure
+    .meta({ openapi: { method: "GET", path: "/velocity/reviews/all", tags: TAGS } })
+    .input(zodUndefinedModel)
+    .output(z.array(z.any()))
+    .query(async () => {
+      return velocityService.getAllAiReviews();
     }),
 });

@@ -43,6 +43,15 @@ export class VelocityService {
     return { project, features };
   }
 
+  public async deleteProject(id: string): Promise<{ success: boolean }> {
+    const [project] = await db
+      .delete(projectsTable)
+      .where(eq(projectsTable.id, id))
+      .returning();
+    if (!project) throw new Error("Project not found");
+    return { success: true };
+  }
+
   // 2. Features
   public async createFeature(projectId: string, title: string, description: string, intakeChannel: string): Promise<SelectFeature> {
     let status = "intake";
@@ -1171,6 +1180,48 @@ Respond ONLY with a JSON object in this exact format:
     }
 
     return { status, summary, comments };
+  }
+
+  public async getAllFeatures(): Promise<(SelectFeature & { projectName: string; githubRepo: string })[]> {
+    const rows = await db
+      .select({
+        feature: featuresTable,
+        projectName: projectsTable.name,
+        githubRepo: projectsTable.githubRepo,
+      })
+      .from(featuresTable)
+      .leftJoin(projectsTable, eq(featuresTable.projectId, projectsTable.id))
+      .orderBy(desc(featuresTable.createdAt));
+    
+    return rows.map(r => ({
+      ...r.feature,
+      projectName: r.projectName || "Unknown Project",
+      githubRepo: r.githubRepo || "",
+    }));
+  }
+
+  public async getAllAiReviews(): Promise<(SelectAiReview & { featureTitle: string; projectName: string; prTitle: string; prNumber: number | null })[]> {
+    const rows = await db
+      .select({
+        review: aiReviewsTable,
+        featureTitle: featuresTable.title,
+        projectName: projectsTable.name,
+        prTitle: pullRequestsTable.title,
+        prNumber: featuresTable.prNumber,
+      })
+      .from(aiReviewsTable)
+      .leftJoin(pullRequestsTable, eq(aiReviewsTable.pullRequestId, pullRequestsTable.id))
+      .leftJoin(featuresTable, eq(pullRequestsTable.featureId, featuresTable.id))
+      .leftJoin(projectsTable, eq(featuresTable.projectId, projectsTable.id))
+      .orderBy(desc(aiReviewsTable.createdAt));
+
+    return rows.map(r => ({
+      ...r.review,
+      featureTitle: r.featureTitle || "Unknown Feature",
+      projectName: r.projectName || "Unknown Project",
+      prTitle: r.prTitle || "Unknown PR",
+      prNumber: r.prNumber,
+    }));
   }
 }
 
