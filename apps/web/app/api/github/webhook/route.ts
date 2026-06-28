@@ -18,9 +18,14 @@ export async function POST(req: Request) {
     const githubEvent = req.headers.get("x-github-event");
     const webhookSecret = process.env.GITHUB_WEBHOOK_SECRET || "";
 
-    const isValid = verifySignature(payload, signature, webhookSecret);
-    if (!isValid) {
-      return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+    // Bypass signature check in development if no secret is configured, or if it is a local simulator payload
+    const isDevBypass = process.env.NODE_ENV === "development" && (!webhookSecret || signature === "sha256=MOCK_CLIENT_SIMULATION");
+
+    if (!isDevBypass) {
+      const isValid = verifySignature(payload, signature, webhookSecret);
+      if (!isValid) {
+        return NextResponse.json({ error: "Invalid signature" }, { status: 401 });
+      }
     }
 
     if (githubEvent === "pull_request") {

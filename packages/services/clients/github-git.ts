@@ -162,3 +162,56 @@ export async function createGithubBranchAndPR(input: {
   console.log(`[github-git] Created Pull Request #${prInfo.number} successfully. URL: ${prInfo.html_url}`);
   return prInfo;
 }
+
+export async function getGithubPrFiles(input: {
+  repoFullName: string;
+  prNumber: number;
+  token: string;
+}) {
+  const { repoFullName, prNumber, token } = input;
+  console.log(`[github-git] Fetching files list for ${repoFullName} PR #${prNumber}...`);
+
+  const filesRes = await fetch(`https://api.github.com/repos/${repoFullName}/pulls/${prNumber}/files`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      Accept: "application/vnd.github.v3+json",
+      "User-Agent": "Velocity-App",
+    },
+  });
+
+  if (!filesRes.ok) {
+    const errText = await filesRes.text();
+    throw new Error(`Failed to fetch PR files from GitHub (${filesRes.status}): ${errText}`);
+  }
+
+  const files = await filesRes.json() as any[];
+  console.log(`[github-git] PR #${prNumber} contains ${files.length} file(s). Fetching raw contents...`);
+
+  const resultFiles = [];
+  for (const f of files) {
+    let content = "";
+    if (f.status !== "removed") {
+      const contentRes = await fetch(`https://api.github.com/repos/${repoFullName}/contents/${f.filename}?ref=${f.sha || "main"}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/vnd.github.v3.raw",
+          "User-Agent": "Velocity-App",
+        },
+      });
+      if (contentRes.ok) {
+        content = await contentRes.text();
+      } else {
+        console.warn(`[github-git] Could not fetch raw content for ${f.filename}: ${contentRes.statusText}`);
+      }
+    }
+
+    resultFiles.push({
+      filepath: f.filename,
+      status: f.status === "added" ? "added" : f.status === "removed" ? "deleted" : "modified",
+      content,
+      diff: f.patch || "",
+    });
+  }
+
+  return resultFiles;
+}

@@ -820,12 +820,78 @@ Respond ONLY with a JSON object in this exact format:
     // Look up feature matching the branch name or get latest fallback
     let [feature] = await db.select().from(featuresTable).where(eq(featuresTable.branchName, input.branchName)).limit(1);
     if (!feature) {
-      const latestFeatures = await db.select().from(featuresTable).orderBy(desc(featuresTable.createdAt)).limit(1);
-      feature = latestFeatures[0];
+      const [project] = await db.select().from(projectsTable).where(eq(projectsTable.githubRepo, input.repoFullName)).limit(1);
+      if (project) {
+        const projectFeatures = await db
+          .select()
+          .from(featuresTable)
+          .where(eq(featuresTable.projectId, project.id))
+          .orderBy(desc(featuresTable.createdAt));
+        feature = projectFeatures[0];
+      }
     }
     if (!feature) {
       console.warn("No active feature found to associate webhook code review with.");
       return;
+    }
+
+    // Sync real PR number
+    await db
+      .update(featuresTable)
+      .set({ prNumber: input.prNumber })
+      .where(eq(featuresTable.id, feature.id));
+
+    // Lookup OAuth token from database
+    const [githubAccount] = await db
+      .select()
+      .from(account)
+      .where(eq(account.providerId, "github"))
+      .limit(1);
+
+    if (githubAccount?.accessToken) {
+      try {
+        const { getGithubPrFiles } = await import("./clients/github-git");
+        const prFiles = await getGithubPrFiles({
+          repoFullName: input.repoFullName,
+          prNumber: input.prNumber,
+          token: githubAccount.accessToken,
+        });
+
+        // Sync local pull request representation
+        const [existingPr] = await db
+          .select()
+          .from(pullRequestsTable)
+          .where(eq(pullRequestsTable.featureId, feature.id))
+          .limit(1);
+
+        if (existingPr) {
+          await db
+            .update(pullRequestsTable)
+            .set({
+              title: input.title,
+              branchName: input.branchName,
+              status: "open",
+              diffData: prFiles,
+              updatedAt: new Date(),
+            })
+            .where(eq(pullRequestsTable.id, existingPr.id));
+        } else {
+          await db
+            .insert(pullRequestsTable)
+            .values({
+              featureId: feature.id,
+              title: input.title,
+              branchName: input.branchName,
+              status: "open",
+              diffData: prFiles,
+            });
+        }
+        console.log(`[triggerWebhookAiReview] Sync complete. Saved ${prFiles.length} file records to DB for PR #${input.prNumber}.`);
+      } catch (err: any) {
+        console.error("[triggerWebhookAiReview] Failed to fetch PR files from GitHub API:", err.message || err);
+      }
+    } else {
+      console.warn("[triggerWebhookAiReview] No GitHub OAuth access token found in DB. Falling back to local simulation data.");
     }
 
     // Run review flow
