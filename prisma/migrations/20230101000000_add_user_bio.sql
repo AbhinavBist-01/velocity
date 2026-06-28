@@ -1,0 +1,2 @@
+-- CreateTable
+ALTER TABLE "User" ADD COLUMN "bio" TEXT;
